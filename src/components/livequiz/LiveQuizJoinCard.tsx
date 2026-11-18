@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ACTION_BTN_DARK } from '../../constants/buttonStyles';
+import { Eye } from 'lucide-react';
+import { ACTION_BTN_DARK, ACTION_BTN_SOFT_PRIMARY } from '../../constants/buttonStyles';
 
 interface LiveQuizJoinCardProps {
   code: string;
@@ -7,8 +8,11 @@ interface LiveQuizJoinCardProps {
   onCodeChange: (val: string) => void;
   onNameChange: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onTestPreview?: () => void;
+  previewTabUrl?: string;
   errorMessage?: string | null;
   isSubmitting?: boolean;
+  isStartingPreview?: boolean;
   embedded?: boolean;
 }
 
@@ -18,8 +22,11 @@ export const LiveQuizJoinCard: React.FC<LiveQuizJoinCardProps> = ({
   onCodeChange,
   onNameChange,
   onSubmit,
+  onTestPreview,
+  previewTabUrl,
   errorMessage,
   isSubmitting = false,
+  isStartingPreview = false,
   embedded = false,
 }) => {
   const [infoOpen, setInfoOpen] = useState(false);
@@ -42,6 +49,17 @@ export const LiveQuizJoinCard: React.FC<LiveQuizJoinCardProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [infoOpen]);
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const cleanCode = code.replace(/\D/g, '').slice(0, 6);
+    const cleanName = name.trim();
+    if (cleanCode.length !== 6 || !cleanName) {
+      e.preventDefault();
+      onSubmit(e);
+      return;
+    }
+    // Allow native browser GET submission to open /?liveQuizJoin=1&code=...&name=... in a new window/tab
+  };
 
   return (
     <div
@@ -77,38 +95,72 @@ export const LiveQuizJoinCard: React.FC<LiveQuizJoinCardProps> = ({
               aria-label="Informasi mode LiveQuiz"
               className="absolute left-0 top-full mt-2 z-30 w-[min(320px,calc(100vw-4rem))] bg-white rounded-2xl border border-black/[0.08] shadow-[0_14px_34px_-10px_rgba(15,23,42,0.18)] p-3.5 text-[12.5px] leading-relaxed text-[#4B4E57] animate-ui-pop"
             >
-              Mendukung mode Classic maupun Test Mode secara langsung lintas tab atau perangkat.
+              Mendukung mode Classic maupun Test Mode secara langsung di jendela baru lintas tab atau perangkat.
             </div>
           )}
         </div>
 
         <form
-          onSubmit={onSubmit}
-          className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 lg:max-w-xl"
+          action="/"
+          method="GET"
+          target="_blank"
+          onSubmit={handleFormSubmit}
+          className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 lg:max-w-2xl"
         >
+          <input type="hidden" name="liveQuizJoin" value="1" />
           <input
             type="text"
+            name="code"
             inputMode="numeric"
             maxLength={6}
             value={code}
             onChange={(e) => onCodeChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="Kode 6 digit"
-            className="sm:w-36 h-9 px-4 rounded-full border border-black/[0.1] bg-white text-[13.5px] font-mono font-bold tracking-widest text-center text-[#1C1D21] outline-none focus:border-[#ee2e65] tabular-nums transition-colors"
+            className="sm:w-32 h-9 px-4 rounded-full border border-black/[0.1] bg-white text-[13.5px] font-mono font-bold tracking-widest text-center text-[#1C1D21] outline-none focus:border-[#ee2e65] tabular-nums transition-colors"
           />
           <input
             type="text"
+            name="name"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="Nama peserta..."
             className="flex-1 h-9 px-4 rounded-full border border-black/[0.1] bg-white text-[13px] text-[#1C1D21] outline-none focus:border-[#ee2e65] transition-colors"
           />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={ACTION_BTN_DARK}
-          >
-            {isSubmitting ? 'Memeriksa...' : 'Gabung Sesi'}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="submit"
+              disabled={isSubmitting || isStartingPreview}
+              className={`flex-1 sm:flex-initial ${ACTION_BTN_DARK}`}
+            >
+              {isSubmitting ? 'Memeriksa...' : 'Gabung Sesi'}
+            </button>
+            {previewTabUrl ? (
+              <a
+                href={previewTabUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onTestPreview?.()}
+                title="Buka pratinjau tampilan peserta setelah bergabung di jendela baru"
+                className={`flex-1 sm:flex-initial ${ACTION_BTN_SOFT_PRIMARY}`}
+              >
+                <Eye className="w-4 h-4 shrink-0" />
+                <span>Test Preview</span>
+              </a>
+            ) : (
+              onTestPreview && (
+                <button
+                  type="button"
+                  onClick={onTestPreview}
+                  disabled={isSubmitting || isStartingPreview}
+                  title="Lihat pratinjau tampilan peserta tepat setelah bergabung ke ruangan"
+                  className={`flex-1 sm:flex-initial ${ACTION_BTN_SOFT_PRIMARY}`}
+                >
+                  <Eye className="w-4 h-4 shrink-0" />
+                  <span>{isStartingPreview ? 'Menyiapkan...' : 'Test Preview'}</span>
+                </button>
+              )
+            )}
+          </div>
         </form>
       </div>
 

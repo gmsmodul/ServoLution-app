@@ -1,17 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Copy,
   Download,
   Edit3,
+  Eye,
+  Flag,
   History,
   Library,
   Play,
   Plus,
+  RotateCcw,
   Search,
   ShieldCheck,
   Sparkles,
   Trash2,
   Users,
+  X,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PASTEL_THEMES } from '../../constants/theme';
@@ -22,6 +26,7 @@ import { LiveQuizParticipantView } from '../livequiz/LiveQuizParticipantView';
 import { LiveQuizJoinAccordion } from '../livequiz/LiveQuizJoinAccordion';
 import type { LiveQuiz, LiveQuizMode, LiveQuizSessionReport } from '../../types';
 import {
+  ACTION_BTN_DARK,
   ACTION_BTN_PRIMARY,
   ACTION_BTN_SECONDARY,
 } from '../../constants/buttonStyles';
@@ -46,6 +51,8 @@ export const LiveQuizPage: React.FC = () => {
     setInitialLiveQuizCode,
     pendingLiveQuizJoin,
     setPendingLiveQuizJoin,
+    pendingLiveQuizPreview,
+    setPendingLiveQuizPreview,
     triggerToast,
   } = useApp();
 
@@ -54,13 +61,17 @@ export const LiveQuizPage: React.FC = () => {
     roomState,
     lastAnswerResult,
     errorMessage,
+    recentEmotes,
     hostClientId,
     createRoom,
     updateRoomSettings,
     kickParticipant,
     startGame,
+    togglePause,
     endGame,
     joinRoom,
+    updateParticipantName,
+    sendEmote,
     submitAnswer,
     reportTabSwitch,
     leaveRoom,
@@ -80,6 +91,13 @@ export const LiveQuizPage: React.FC = () => {
   const [joinAccordionOpen, setJoinAccordionOpen] = useState(() => Boolean(initialLiveQuizCode));
   const [joinCode, setJoinCode] = useState(initialLiveQuizCode || '');
   const [joinName, setJoinName] = useState('');
+
+  // Post-Join Participant Preview State
+  const [isParticipantPreviewActive, setIsParticipantPreviewActive] = useState(false);
+  const [isStartingPreview, setIsStartingPreview] = useState(false);
+  const [previewQuizId, setPreviewQuizId] = useState<string>(() => liveQuizzes[0]?.id || '');
+  const [previewMode, setPreviewMode] = useState<LiveQuizMode>('classic');
+  const pendingPreviewJoinRef = useRef<{ name: string; excludeCode: string } | null>(null);
 
   const savedEndedRoomRef = useRef<string | null>(null);
 
@@ -106,8 +124,75 @@ export const LiveQuizPage: React.FC = () => {
   useEffect(() => {
     if (errorMessage) {
       setJoinAccordionOpen(true);
+      setIsStartingPreview(false);
+      pendingPreviewJoinRef.current = null;
     }
   }, [errorMessage]);
+
+  const startParticipantPreview = useCallback(
+    (customName?: string, targetQuizId?: string, targetMode?: LiveQuizMode) => {
+      const targetQuiz =
+        liveQuizzes.find((q) => q.id === (targetQuizId || previewQuizId)) || liveQuizzes[0];
+      if (!targetQuiz) {
+        triggerToast(
+          'Belum Ada Kuis',
+          'Buat minimal 1 kuis terlebih dahulu untuk menjalankan Test Preview.',
+          'warning'
+        );
+        return;
+      }
+
+      const chosenMode = targetMode || previewMode;
+      const participantName = (customName ?? joinName).trim() || 'Peserta Preview';
+      const excludeCode = previewSocket.roomState?.code || '';
+
+      clearError();
+      setPreviewQuizId(targetQuiz.id);
+      setPreviewMode(chosenMode);
+      setIsStartingPreview(true);
+      pendingPreviewJoinRef.current = { name: participantName, excludeCode };
+
+      previewSocket.leaveRoom();
+      previewSocket.createRoom(targetQuiz, chosenMode, {
+        shuffleQuestions: false,
+        shuffleOptions: chosenMode === 'classic',
+        showExplanation: chosenMode === 'classic',
+        streakBonus: chosenMode === 'classic',
+      });
+    },
+    [liveQuizzes, previewQuizId, previewMode, joinName, previewSocket, clearError, triggerToast]
+  );
+
+  // Auto-join participant socket as soon as preview host room is created on server
+  useEffect(() => {
+    const pending = pendingPreviewJoinRef.current;
+    if (!pending) return;
+    if (
+      previewSocket.roomState &&
+      previewSocket.roomState.role === 'host' &&
+      previewSocket.roomState.code !== pending.excludeCode
+    ) {
+      pendingPreviewJoinRef.current = null;
+      const code = previewSocket.roomState.code;
+      const name = pending.name;
+      setIsParticipantPreviewActive(true);
+      setIsStartingPreview(false);
+      setJoinCode(code);
+      setJoinName(name);
+      const avatarColor = AVATAR_COLORS[name.length % AVATAR_COLORS.length];
+      joinRoom(code, name, avatarColor);
+    }
+  }, [previewSocket.roomState, joinRoom]);
+
+  // Auto-start participant preview when redirected from OverviewPage
+  useEffect(() => {
+    if (!pendingLiveQuizPreview) return;
+    const { name } = pendingLiveQuizPreview;
+    setPendingLiveQuizPreview(null);
+    setJoinName(name);
+    setJoinAccordionOpen(true);
+    startParticipantPreview(name);
+  }, [pendingLiveQuizPreview, setPendingLiveQuizPreview, startParticipantPreview]);
 
   // Persist completed session report when Host ends a LiveQuiz room
   useEffect(() => {
@@ -168,6 +253,19 @@ export const LiveQuizPage: React.FC = () => {
   const buildHostTabUrl = (quiz: LiveQuiz, mode: LiveQuizMode) =>
     `/?liveQuizHost=1&quizId=${encodeURIComponent(quiz.id)}&mode=${mode}`;
 
+  const stashQuizzesForJoinTab = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem('servolution_live_quizzes', JSON.stringify(liveQuizzes));
+    } catch {
+      // ignore storage quota errors
+    }
+  };
+
+  const previewTabUrl = `/?liveQuizJoin=1&preview=1&name=${encodeURIComponent(
+    joinName.trim() || 'Peserta Preview'
+  )}`;
+
   const handleJoinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = joinCode.replace(/\D/g, '').slice(0, 6);
@@ -179,8 +277,14 @@ export const LiveQuizPage: React.FC = () => {
       triggerToast('Nama Diperlukan', 'Masukkan nama panggilan Anda untuk bergabung.', 'warning');
       return;
     }
-    const avatarColor = AVATAR_COLORS[joinName.trim().length % AVATAR_COLORS.length];
-    joinRoom(cleanCode, joinName.trim(), avatarColor);
+  };
+
+  const exitParticipantPreview = () => {
+    pendingPreviewJoinRef.current = null;
+    setIsStartingPreview(false);
+    setIsParticipantPreviewActive(false);
+    previewSocket.leaveRoom();
+    leaveRoom();
   };
 
   // 1. Active Host or Participant Room View
@@ -192,9 +296,11 @@ export const LiveQuizPage: React.FC = () => {
             hostClientId={hostClientId}
             roomState={roomState}
             connectionStatus={connectionStatus}
+            recentEmotes={recentEmotes}
             onUpdateSettings={(mode, settings) => updateRoomSettings(roomState.code, mode, settings)}
             onKickParticipant={(pid) => kickParticipant(roomState.code, pid)}
             onStartGame={() => startGame(roomState.code)}
+            onTogglePause={() => togglePause(roomState.code)}
             onEndGame={() => endGame(roomState.code)}
             onLeave={() => {
               previewSocket.leaveRoom();
@@ -212,19 +318,152 @@ export const LiveQuizPage: React.FC = () => {
             }
             onPreviewReportTabSwitch={() => previewSocket.reportTabSwitch(roomState.code)}
             onPreviewClearAnswerResult={previewSocket.clearAnswerResult}
+            onPreviewUpdateName={(newName) =>
+              previewSocket.updateParticipantName(roomState.code, newName)
+            }
+            onPreviewSendEmote={(emoji) => previewSocket.sendEmote(roomState.code, emoji)}
           />
         ) : (
-          <LiveQuizParticipantView
-            roomState={roomState}
-            connectionStatus={connectionStatus}
-            lastAnswerResult={lastAnswerResult}
-            onSubmitAnswer={(questionId, payload) =>
-              submitAnswer(roomState.code, questionId, payload)
-            }
-            onReportTabSwitch={() => reportTabSwitch(roomState.code)}
-            onClearAnswerResult={clearAnswerResult}
-            onLeave={leaveRoom}
-          />
+          <div className="max-w-4xl mx-auto space-y-4">
+            {isParticipantPreviewActive && (
+              <div className="rounded-2xl bg-white border border-black/[0.08] shadow-xs px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF1F5] text-[#9D113C] font-semibold">
+                    <Eye className="w-3.5 h-3.5" />
+                    Test Preview Setelah Gabung
+                  </span>
+                  <span className="font-mono font-bold text-[#1C1D21] tabular-nums">
+                    Room {roomState.code}
+                  </span>
+                  <span className="text-[#8A8D98]">·</span>
+                  <span className="text-[#4B4E57] font-medium">
+                    {roomState.status === 'lobby'
+                      ? 'Tahap 1: Ruang Tunggu (Lobi)'
+                      : roomState.status === 'active'
+                      ? 'Tahap 2: Menjawab Soal Live'
+                      : 'Tahap 3: Ringkasan & Pembahasan'}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {roomState.status === 'lobby' && (
+                    <>
+                      {liveQuizzes.length > 1 && (
+                        <select
+                          aria-label="Pilih kuis untuk preview"
+                          value={previewQuizId}
+                          onChange={(e) =>
+                            startParticipantPreview(joinName, e.target.value, previewMode)
+                          }
+                          className="h-9 px-3 rounded-full border border-black/[0.1] bg-[#FAFBFD] text-[12.5px] font-medium text-[#1C1D21] outline-none focus:border-[#ee2e65] max-w-[200px] truncate cursor-pointer"
+                        >
+                          {liveQuizzes.map((q) => (
+                            <option key={q.id} value={q.id}>
+                              {q.title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      <div className="inline-flex items-center gap-1 bg-[#F4F5F8] p-1 rounded-full">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewMode('classic');
+                            previewSocket.updateRoomSettings(roomState.code, 'classic', {
+                              ...roomState.settings,
+                              showExplanation: true,
+                              streakBonus: true,
+                            });
+                          }}
+                          className={`px-3 py-1 rounded-full text-[12px] font-semibold cursor-pointer transition-colors ${
+                            roomState.mode === 'classic'
+                              ? 'bg-white text-[#1C1D21] shadow-xs'
+                              : 'text-[#6E717A] hover:text-[#1C1D21]'
+                          }`}
+                        >
+                          Classic
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewMode('test');
+                            previewSocket.updateRoomSettings(roomState.code, 'test', {
+                              ...roomState.settings,
+                              streakBonus: false,
+                            });
+                          }}
+                          className={`px-3 py-1 rounded-full text-[12px] font-semibold cursor-pointer transition-colors ${
+                            roomState.mode === 'test'
+                              ? 'bg-white text-[#1C1D21] shadow-xs'
+                              : 'text-[#6E717A] hover:text-[#1C1D21]'
+                          }`}
+                        >
+                          Test Mode
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => previewSocket.startGame(roomState.code)}
+                        className={ACTION_BTN_PRIMARY}
+                      >
+                        <Play className="w-4 h-4 shrink-0" />
+                        <span>Mulai Kuis (Simulasi Host)</span>
+                      </button>
+                    </>
+                  )}
+
+                  {roomState.status === 'active' && (
+                    <button
+                      type="button"
+                      onClick={() => previewSocket.endGame(roomState.code)}
+                      className={ACTION_BTN_DARK}
+                    >
+                      <Flag className="w-4 h-4 shrink-0" />
+                      <span>Akhiri &amp; Lihat Hasil</span>
+                    </button>
+                  )}
+
+                  {roomState.status === 'ended' && (
+                    <button
+                      type="button"
+                      onClick={() => startParticipantPreview(joinName, previewQuizId, previewMode)}
+                      className={ACTION_BTN_PRIMARY}
+                    >
+                      <RotateCcw className="w-4 h-4 shrink-0" />
+                      <span>Ulangi Preview</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={exitParticipantPreview}
+                    className={ACTION_BTN_SECONDARY}
+                  >
+                    <X className="w-4 h-4 shrink-0" />
+                    <span>Tutup Preview</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <LiveQuizParticipantView
+              key={roomState.code}
+              roomState={roomState}
+              connectionStatus={connectionStatus}
+              lastAnswerResult={lastAnswerResult}
+              recentEmotes={recentEmotes}
+              onUpdateName={(newName) => updateParticipantName(roomState.code, newName)}
+              onSendEmote={(emoji) => sendEmote(roomState.code, emoji)}
+              onSubmitAnswer={(questionId, payload) =>
+                submitAnswer(roomState.code, questionId, payload)
+              }
+              onReportTabSwitch={() => reportTabSwitch(roomState.code)}
+              onClearAnswerResult={clearAnswerResult}
+              onLeave={isParticipantPreviewActive ? exitParticipantPreview : leaveRoom}
+            />
+          </div>
         )}
       </div>
     );
@@ -305,6 +544,9 @@ export const LiveQuizPage: React.FC = () => {
           setJoinName(val);
         }}
         onSubmit={handleJoinSubmit}
+        onTestPreview={stashQuizzesForJoinTab}
+        previewTabUrl={previewTabUrl}
+        isStartingPreview={isStartingPreview}
         errorMessage={errorMessage}
       />
 

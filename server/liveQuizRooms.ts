@@ -67,7 +67,10 @@ interface InternalRoom {
   hostSockets: Set<WebSocket>;
   mode: QuizMode;
   settings: RoomSettings;
-  status: 'lobby' | 'active' | 'ended';
+  status: 'lobby' | 'countdown' | 'active' | 'ended';
+  countdownEndsAt?: number;
+  countdownTimer?: ReturnType<typeof setTimeout>;
+  paused: boolean;
   rawQuestions: ServerQuizQuestion[];
   preparedQuestions: ServerQuizQuestion[];
   participants: Map<string, InternalParticipant>;
@@ -183,6 +186,8 @@ export class LiveQuizRoomManager {
         mode: room.mode,
         settings: room.settings,
         status: room.status,
+        countdownEndsAt: room.countdownEndsAt,
+        paused: room.paused,
         role: 'host',
         totalQuestions: activeQuestions.length,
         participants: this.serializeParticipants(room, false),
@@ -196,7 +201,10 @@ export class LiveQuizRoomManager {
 
   private buildParticipantState(room: InternalRoom, participantId: string) {
     const activeQuestions = room.preparedQuestions.length > 0 ? room.preparedQuestions : room.rawQuestions;
+    const participant = room.participants.get(participantId);
     const maskTestScores = room.mode === 'test' && room.status === 'active';
+    const allowReview =
+      room.status === 'ended' || (room.mode === 'classic' && Boolean(participant?.finished));
     const questionsForParticipant =
       room.status === 'active' || room.status === 'ended'
         ? activeQuestions.map((q) => ({
@@ -219,12 +227,14 @@ export class LiveQuizRoomManager {
         mode: room.mode,
         settings: room.settings,
         status: room.status,
+        countdownEndsAt: room.countdownEndsAt,
+        paused: room.paused,
         role: 'participant',
         participantId,
         totalQuestions: activeQuestions.length,
         participants: this.serializeParticipants(room, maskTestScores),
         questionsForParticipant,
-        reviewQuestions: room.status === 'ended' ? activeQuestions : undefined,
+        reviewQuestions: allowReview ? activeQuestions : undefined,
         questionStats: room.status === 'ended' ? this.buildQuestionStats(room) : undefined,
         startedAt: room.startedAt,
         endedAt: room.endedAt,
@@ -303,6 +313,7 @@ export class LiveQuizRoomManager {
         mode,
         settings,
         status: 'lobby',
+        paused: false,
         rawQuestions: quiz.questions,
         preparedQuestions: [],
         participants: new Map(),
@@ -391,8 +402,36 @@ export class LiveQuizRoomManager {
       }
 
       room.preparedQuestions = prepared;
-      room.status = 'active';
-      room.startedAt = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      room.paused = false;
+      room.status = 'countdown';
+      room.countdownEndsAt = Date.now() + 3000;
+      if (room.countdownTimer) {
+        clearTimeout(room.countdownTimer);
+      }
+      this.broadcastRoomState(room);
+
+      room.countdownTimer = setTimeout(() => {
+        if (room.status !== 'countdown') return;
+        room.status = 'active';
+        room.countdownEndsAt = undefined;
+        room.countdownTimer = undefined;
+        room.startedAt = new Date().toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        this.broadcastRoomState(room);
+      }, 3050);
+      return;
+    }
+
+    if (type === 'host:toggle_pause') {
+      const code = String(payload.code || '').trim();
+      const hostClientId = String(payload.hostClientId || '');
+      const room = this.rooms.get(code);
+      if (!room || room.hostClientId !== hostClientId) return;
+      if (room.status !== 'active') return;
+
+      room.paused = !room.paused;
       this.broadcastRoomState(room);
       return;
     }
@@ -403,6 +442,12 @@ export class LiveQuizRoomManager {
       const room = this.rooms.get(code);
       if (!room || room.hostClientId !== hostClientId) return;
 
+      if (room.countdownTimer) {
+        clearTimeout(room.countdownTimer);
+        room.countdownTimer = undefined;
+      }
+      room.countdownEndsAt = undefined;
+      room.paused = false;
       if (room.preparedQuestions.length === 0) {
         room.preparedQuestions = room.rawQuestions.map((q) => ({ ...q, options: [...(q.options || [])] }));
       }
@@ -480,7 +525,7 @@ export class LiveQuizRoomManager {
       const timeTakenMs = Math.max(0, Number(payload.timeTakenMs || 0));
 
       const room = this.rooms.get(code);
-      if (!room || room.status !== 'active') return;
+      if (!room || room.status !== 'active' || room.paused) return;
       const participant = room.participants.get(participantId);
       if (!participant) return;
 
@@ -593,6 +638,24 @@ export class LiveQuizRoomManager {
               },
       });
 
+      const allParticipants = Array.from(room.participants.values());
+      const allFinished =
+        allParticipants.length > 0 && allParticipants.every((p) => p.finished);
+
+      if (allFinished) {
+        room.paused = false;
+        room.status = 'ended';
+        room.endedAt = new Date().toLocaleString('id-ID', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        this.broadcastRoomState(room);
+        return;
+      }
+
       // Notify Host immediately; in Classic mode also update participants' live leaderboard
       this.sendToHosts(room, this.buildHostState(room));
       if (room.mode === 'classic') {
@@ -615,6 +678,45 @@ export class LiveQuizRoomManager {
 
       participant.tabSwitches += 1;
       this.sendToHosts(room, this.buildHostState(room));
+      return;
+    }
+
+    if (type === 'participant:update_name') {
+      const code = String(payload.code || '').trim();
+      const participantId = String(payload.participantId || '').trim();
+      const nextName = String(payload.name || '').trim().slice(0, 32);
+      const room = this.rooms.get(code);
+      if (!room || !nextName) return;
+      const participant = room.participants.get(participantId);
+      if (!participant) return;
+
+      participant.name = nextName;
+      this.broadcastRoomState(room);
+      return;
+    }
+
+    if (type === 'participant:emote') {
+      const code = String(payload.code || '').trim();
+      const participantId = String(payload.participantId || '').trim();
+      const emoji = String(payload.emoji || '').trim().slice(0, 8);
+      const room = this.rooms.get(code);
+      if (!room || !emoji) return;
+      const participant = room.participants.get(participantId);
+      if (!participant) return;
+
+      const emoteEvent = {
+        type: 'room:emote',
+        payload: {
+          id: `${participantId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          participantId,
+          name: participant.name,
+          emoji,
+        },
+      };
+      this.sendToHosts(room, emoteEvent);
+      for (const p of room.participants.values()) {
+        safeSend(p.socket, emoteEvent);
+      }
       return;
     }
 

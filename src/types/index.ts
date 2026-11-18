@@ -413,7 +413,9 @@ export interface LiveQuizRoomState {
   subject: string;
   mode: LiveQuizMode;
   settings: LiveQuizSettings;
-  status: 'lobby' | 'active' | 'ended';
+  status: 'lobby' | 'countdown' | 'active' | 'ended';
+  countdownEndsAt?: number;
+  paused?: boolean;
   role: 'host' | 'participant';
   participantId?: string;
   totalQuestions: number;

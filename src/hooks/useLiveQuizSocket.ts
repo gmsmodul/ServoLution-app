@@ -18,11 +18,19 @@ function getOrCreateSessionId(key: string): string {
   return created;
 }
 
+export interface LiveQuizEmoteEvent {
+  id: string;
+  participantId: string;
+  name: string;
+  emoji: string;
+}
+
 export function useLiveQuizSocket(storageSuffix = '') {
   const [connectionStatus, setConnectionStatus] = useState<WsConnectionStatus>('connecting');
   const [roomState, setRoomState] = useState<LiveQuizRoomState | null>(null);
   const [lastAnswerResult, setLastAnswerResult] = useState<LiveQuizAnswerResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [recentEmotes, setRecentEmotes] = useState<LiveQuizEmoteEvent[]>([]);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
@@ -122,6 +130,15 @@ export function useLiveQuizSocket(storageSuffix = '') {
           setRoomState(null);
           setLastAnswerResult(null);
           setErrorMessage(String(msg.payload?.message || 'Anda dikeluarkan dari ruangan oleh Host.'));
+        } else if (msg.type === 'room:emote') {
+          const emote = msg.payload as LiveQuizEmoteEvent;
+          if (emote && emote.id) {
+            setRecentEmotes((prev) => [...prev.slice(-11), emote]);
+            window.setTimeout(() => {
+              if (!mountedRef.current) return;
+              setRecentEmotes((prev) => prev.filter((item) => item.id !== emote.id));
+            }, 2800);
+          }
         }
       } catch {
         // ignore malformed frames
@@ -226,6 +243,16 @@ export function useLiveQuizSocket(storageSuffix = '') {
     [sendRaw]
   );
 
+  const togglePause = useCallback(
+    (code: string) => {
+      sendRaw('host:toggle_pause', {
+        code,
+        hostClientId: hostClientIdRef.current,
+      });
+    },
+    [sendRaw]
+  );
+
   const endGame = useCallback(
     (code: string) => {
       sendRaw('host:end', {
@@ -287,12 +314,43 @@ export function useLiveQuizSocket(storageSuffix = '') {
     [sendRaw]
   );
 
+  const updateParticipantName = useCallback(
+    (code: string, name: string) => {
+      const cleanName = name.trim();
+      if (!cleanName) return;
+      if (activeSessionRef.current?.role === 'participant') {
+        activeSessionRef.current = {
+          ...activeSessionRef.current,
+          name: cleanName,
+        };
+      }
+      sendRaw('participant:update_name', {
+        code,
+        participantId: participantIdRef.current,
+        name: cleanName,
+      });
+    },
+    [sendRaw]
+  );
+
+  const sendEmote = useCallback(
+    (code: string, emoji: string) => {
+      sendRaw('participant:emote', {
+        code,
+        participantId: participantIdRef.current,
+        emoji,
+      });
+    },
+    [sendRaw]
+  );
+
   const leaveRoom = useCallback(() => {
     sendRaw('room:leave', {});
     activeSessionRef.current = null;
     setRoomState(null);
     setLastAnswerResult(null);
     setErrorMessage(null);
+    setRecentEmotes([]);
   }, [sendRaw]);
 
   const clearAnswerResult = useCallback(() => {
@@ -308,14 +366,18 @@ export function useLiveQuizSocket(storageSuffix = '') {
     roomState,
     lastAnswerResult,
     errorMessage,
+    recentEmotes,
     hostClientId: hostClientIdRef.current,
     createRoom,
     reconnectHost,
     updateRoomSettings,
     kickParticipant,
     startGame,
+    togglePause,
     endGame,
     joinRoom,
+    updateParticipantName,
+    sendEmote,
     submitAnswer,
     reportTabSwitch,
     leaveRoom,

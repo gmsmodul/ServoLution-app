@@ -249,6 +249,8 @@ interface AppContextType {
   setInitialLiveQuizCode: React.Dispatch<React.SetStateAction<string>>;
   pendingLiveQuizJoin: { code: string; name: string } | null;
   setPendingLiveQuizJoin: React.Dispatch<React.SetStateAction<{ code: string; name: string } | null>>;
+  pendingLiveQuizPreview: { name: string } | null;
+  setPendingLiveQuizPreview: React.Dispatch<React.SetStateAction<{ name: string } | null>>;
 
   // Attendance & QR Check-in
   attendanceByClass: Record<string, ClassAttendanceData>;
@@ -603,6 +605,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [liveQuizzes, setLiveQuizzes] = useState<LiveQuiz[]>(INITIAL_LIVE_QUIZZES);
   const [liveQuizReports, setLiveQuizReports] = useState<LiveQuizSessionReport[]>(INITIAL_LIVE_QUIZ_REPORTS);
   const [pendingLiveQuizJoin, setPendingLiveQuizJoin] = useState<{ code: string; name: string } | null>(null);
+  const [pendingLiveQuizPreview, setPendingLiveQuizPreview] = useState<{ name: string } | null>(null);
 
   // Attendance & QR Check-in
   const [attendanceByClass, setAttendanceByClass] = useState<Record<string, ClassAttendanceData>>(STUDENTS_DATA);
@@ -2388,6 +2391,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setInitialLiveQuizCode,
         pendingLiveQuizJoin,
         setPendingLiveQuizJoin,
+        pendingLiveQuizPreview,
+        setPendingLiveQuizPreview,
 
         attendanceByClass,
         setAttendanceByClass,

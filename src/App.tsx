@@ -28,6 +28,7 @@ import { SettingsPage } from './components/pages/SettingsPage';
 import { UiKitPage } from './components/pages/UiKitPage';
 import { QrDisplayPage } from './components/schedule/QrDisplayPage';
 import { LiveQuizHostTabPage } from './components/livequiz/LiveQuizHostTabPage';
+import { LiveQuizParticipantTabPage } from './components/livequiz/LiveQuizParticipantTabPage';
 
 function MainLayout() {
   const { activePage, prevPage, triggerToast } = useApp();
@@ -107,6 +108,7 @@ export default function App() {
     typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const isQrDisplayTab = params?.get('qrDisplay') === '1';
   const isLiveQuizHostTab = params?.get('liveQuizHost') === '1';
+  const isLiveQuizJoinTab = params?.get('liveQuizJoin') === '1';
 
   return (
     <MotionConfig reducedMotion="user">
@@ -114,6 +116,11 @@ export default function App() {
         {isLiveQuizHostTab ? (
           <>
             <LiveQuizHostTabPage />
+            <ToastContainer />
+          </>
+        ) : isLiveQuizJoinTab ? (
+          <>
+            <LiveQuizParticipantTabPage />
             <ToastContainer />
           </>
         ) : isQrDisplayTab ? (

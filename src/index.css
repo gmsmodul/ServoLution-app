@@ -607,6 +607,43 @@ body:has([data-modal-sheet-backdrop="true"]:not([data-closing="true"])) .app-she
   animation: ui-stripes 0.85s linear infinite;
 }
 
+@keyframes wayground-gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes wayground-aurora-drift {
+  0% {
+    transform: translate3d(-4%, -3%, 0) scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.08);
+    opacity: 0.92;
+  }
+  100% {
+    transform: translate3d(-2%, 4%, 0) scale(0.98);
+    opacity: 0.75;
+  }
+}
+
+.animate-wayground-gradient {
+  background-size: 240% 240%;
+  animation: wayground-gradient-flow 16s ease-in-out infinite;
+}
+
+.animate-wayground-aurora {
+  animation: wayground-aurora-drift 18s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
 /* Staggered Section Cascade on Component Switch */
 .ui-stagger > * {
   animation: ui-section-enter 400ms var(--ease-fluid) both;
@@ -686,6 +723,8 @@ body:has([data-modal-sheet-backdrop="true"]:not([data-closing="true"])) .app-she
   .animate-ui-check,
   .animate-ui-shake,
   .animate-ui-stripes,
+  .animate-wayground-gradient,
+  .animate-wayground-aurora,
   .ui-stagger > * {
     animation: none !important;
     filter: none !important;

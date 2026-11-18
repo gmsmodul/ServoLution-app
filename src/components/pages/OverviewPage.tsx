@@ -30,9 +30,8 @@ export const OverviewPage: React.FC = () => {
     assignments,
     lessonPlans,
     schedules,
+    liveQuizzes,
     setActiveTakeAssignment,
-    setPendingLiveQuizJoin,
-    triggerToast,
   } = useApp();
 
   const [now, setNow] = useState<Date>(() => new Date());
@@ -58,9 +57,8 @@ export const OverviewPage: React.FC = () => {
   const [joinCode, setJoinCode] = useState('');
   const [joinName, setJoinName] = useState('');
   const [joinError, setJoinError] = useState<string | null>(null);
-  const [isJoining, setIsJoining] = useState(false);
 
-  const handleOverviewJoinSubmit = async (e: React.FormEvent) => {
+  const handleOverviewJoinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = joinCode.replace(/\D/g, '').slice(0, 6);
     if (cleanCode.length !== 6) {
@@ -71,28 +69,21 @@ export const OverviewPage: React.FC = () => {
       setJoinError('Masukkan nama peserta terlebih dahulu.');
       return;
     }
+  };
 
+  const stashQuizzesForJoinTab = () => {
     setJoinError(null);
-    setIsJoining(true);
+    if (typeof window === 'undefined') return;
     try {
-      const res = await fetch(`/api/livequiz/room/${cleanCode}`);
-      if (!res.ok) {
-        setJoinError(`Ruangan dengan kode ${cleanCode} tidak ditemukan.`);
-        return;
-      }
-      const summary = await res.json();
-      if (summary.status === 'ended') {
-        setJoinError('Sesi LiveQuiz ini sudah berakhir.');
-        return;
-      }
-      setPendingLiveQuizJoin({ code: cleanCode, name: joinName.trim() });
-      setActivePage('livequiz');
+      window.localStorage.setItem('servolution_live_quizzes', JSON.stringify(liveQuizzes));
     } catch {
-      triggerToast('Koneksi Bermasalah', 'Gagal memeriksa kode ruangan. Coba lagi.', 'error');
-    } finally {
-      setIsJoining(false);
+      // ignore storage quota errors
     }
   };
+
+  const overviewPreviewTabUrl = `/?liveQuizJoin=1&preview=1&name=${encodeURIComponent(
+    joinName.trim() || 'Peserta Preview'
+  )}`;
 
   const pendingGradingCount = assignments.reduce(
     (acc, a) => acc + a.submissions.filter((s) => s.status === 'Needs Review').length,
@@ -189,8 +180,9 @@ export const OverviewPage: React.FC = () => {
           setJoinName(val);
         }}
         onSubmit={handleOverviewJoinSubmit}
+        onTestPreview={stashQuizzesForJoinTab}
+        previewTabUrl={overviewPreviewTabUrl}
         errorMessage={joinError}
-        isSubmitting={isJoining}
       />
 
       {/* Unified 4-Column Metric Strip */}

@@ -46,12 +46,14 @@ export const LiveQuizHostTabPage: React.FC = () => {
     connectionStatus,
     roomState,
     errorMessage,
+    recentEmotes,
     hostClientId,
     createRoom,
     reconnectHost,
     updateRoomSettings,
     kickParticipant,
     startGame,
+    togglePause,
     endGame,
     leaveRoom,
   } = useLiveQuizSocket();
@@ -156,9 +158,11 @@ export const LiveQuizHostTabPage: React.FC = () => {
         hostClientId={hostClientId}
         roomState={roomState}
         connectionStatus={connectionStatus}
+        recentEmotes={recentEmotes}
         onUpdateSettings={(mode, settings) => updateRoomSettings(roomState.code, mode, settings)}
         onKickParticipant={(pid) => kickParticipant(roomState.code, pid)}
         onStartGame={() => startGame(roomState.code)}
+        onTogglePause={() => togglePause(roomState.code)}
         onEndGame={() => endGame(roomState.code)}
         onLeave={handleExitToHub}
         previewRoomState={previewSocket.roomState}
@@ -173,6 +177,8 @@ export const LiveQuizHostTabPage: React.FC = () => {
         }
         onPreviewReportTabSwitch={() => previewSocket.reportTabSwitch(roomState.code)}
         onPreviewClearAnswerResult={previewSocket.clearAnswerResult}
+        onPreviewUpdateName={(newName) => previewSocket.updateParticipantName(roomState.code, newName)}
+        onPreviewSendEmote={(emoji) => previewSocket.sendEmote(roomState.code, emoji)}
       />
     );
   }

@@ -9,8 +9,11 @@ interface LiveQuizJoinAccordionProps {
   onCodeChange: (val: string) => void;
   onNameChange: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onTestPreview?: () => void;
+  previewTabUrl?: string;
   errorMessage?: string | null;
   isSubmitting?: boolean;
+  isStartingPreview?: boolean;
   open?: boolean;
   onToggle?: () => void;
   defaultOpen?: boolean;
@@ -22,8 +25,11 @@ export const LiveQuizJoinAccordion: React.FC<LiveQuizJoinAccordionProps> = ({
   onCodeChange,
   onNameChange,
   onSubmit,
+  onTestPreview,
+  previewTabUrl,
   errorMessage,
   isSubmitting = false,
+  isStartingPreview = false,
   open,
   onToggle,
   defaultOpen = false,
@@ -98,8 +104,11 @@ export const LiveQuizJoinAccordion: React.FC<LiveQuizJoinAccordionProps> = ({
                 onCodeChange={onCodeChange}
                 onNameChange={onNameChange}
                 onSubmit={onSubmit}
+                onTestPreview={onTestPreview}
+                previewTabUrl={previewTabUrl}
                 errorMessage={errorMessage}
                 isSubmitting={isSubmitting}
+                isStartingPreview={isStartingPreview}
               />
             </motion.div>
           </motion.div>
