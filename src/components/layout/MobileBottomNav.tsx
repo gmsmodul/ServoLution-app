@@ -23,15 +23,23 @@ import {
   GraduationCap,
   Zap,
   Settings,
+  HeartHandshake,
+  LayoutGrid,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PageId } from '../../types';
 import { PASTEL_THEMES } from '../../constants/theme';
+import { HOME_SIDEBAR_GROUPS, WORKSPACES_REGISTRY } from '../../constants/workspaces';
 import { useBottomSheetMotion } from '../../hooks/useBottomSheetMotion';
 import { playUiMotionSound } from '../../utils/uiMotionSound';
 
 export const MobileBottomNav: React.FC = () => {
   const {
+    activeWorkspace,
+    activeModulePage,
+    setActiveModulePage,
+    enterWorkspace,
+    goBackToHome,
     activePage,
     setActivePage,
     unreadNotifCount,
@@ -144,17 +152,25 @@ export const MobileBottomNav: React.FC = () => {
     { id: 'uikit', label: 'UI Design System', icon: Layers },
   ];
 
+  const currentWorkspace = WORKSPACES_REGISTRY[activeWorkspace] || WORKSPACES_REGISTRY.home;
+
   const primaryIds = new Set(primarySlots.map((s) => s.id));
   const popupModules = allModules.filter((m) => !primaryIds.has(m.id));
-  const isOverflowActive = !primaryIds.has(activePage);
+  const isOverflowActive = activeWorkspace === 'servolution' ? !primaryIds.has(activePage) : false;
   const activeOverflowModule = isOverflowActive
     ? allModules.find((m) => m.id === activePage)
     : undefined;
 
   // Which of the 4 dock slots (0..3) is currently active
-  const activeSlotIndex = isOverflowActive
-    ? 3
-    : primarySlots.findIndex((s) => s.id === activePage);
+  const activeSlotIndex = (() => {
+    if (activeWorkspace === 'servolution') {
+      return isOverflowActive ? 3 : primarySlots.findIndex((s) => s.id === activePage);
+    }
+    if (activeWorkspace === 'home') {
+      return activeModulePage === 'settings' ? 2 : 0;
+    }
+    return activeModulePage === 'settings' ? 2 : 0;
+  })();
 
   // Gliding pill calculation for the 4-slot floating dock
   useLayoutEffect(() => {
@@ -181,7 +197,7 @@ export const MobileBottomNav: React.FC = () => {
       ro?.disconnect();
       window.removeEventListener('resize', updateIndicator);
     };
-  }, [activeSlotIndex, activePage, menuOpen]);
+  }, [activeSlotIndex, activePage, activeWorkspace, activeModulePage, menuOpen]);
 
   // Reset subview whenever menu opens/closes
   useEffect(() => {
@@ -350,7 +366,14 @@ export const MobileBottomNav: React.FC = () => {
               <div className="px-3.5 pt-3 pb-2.5 border-b border-black/[0.12] flex items-center justify-between gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => handleSelectPage('overview')}
+                  onClick={() => {
+                    if (activeWorkspace === 'servolution') {
+                      handleSelectPage('overview');
+                    } else {
+                      setActiveModulePage('main');
+                      closeMenuSmoothly();
+                    }
+                  }}
                   className="flex items-center gap-2 min-w-0 text-left cursor-pointer group"
                 >
                   <div className="w-7 h-7 rounded-full bg-[#ee2e65] text-white text-[10px] font-bold flex items-center justify-center shrink-0 shadow-xs">
@@ -361,39 +384,102 @@ export const MobileBottomNav: React.FC = () => {
                       Rasengan
                     </div>
                     <div className="text-[10px] text-[#8A8D98] leading-tight">
-                      Teacher · Servolution
+                      Teacher · {currentWorkspace.brandName}
                     </div>
                   </div>
                 </button>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    title="Analytics & Preferences"
-                    onClick={() => handleSelectPage('analytics')}
-                    className="w-7 h-7 rounded-full hover:bg-[#F4F5F8] text-[#4B4E57] flex items-center justify-center transition-colors cursor-pointer"
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Quick Create"
-                    onClick={() =>
-                      setMenuSubview((prev) => (prev === 'quickCreate' ? 'nav' : 'quickCreate'))
-                    }
-                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
-                      menuSubview === 'quickCreate'
-                        ? 'bg-[#FDE0E9] text-[#9D113C] rotate-45'
-                        : 'bg-[#ee2e65] text-white hover:brightness-105 shadow-xs'
-                    }`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                {activeWorkspace === 'servolution' && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      title="Analytics & Preferences"
+                      onClick={() => handleSelectPage('analytics')}
+                      className="w-7 h-7 rounded-full hover:bg-[#F4F5F8] text-[#4B4E57] flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Quick Create"
+                      onClick={() =>
+                        setMenuSubview((prev) => (prev === 'quickCreate' ? 'nav' : 'quickCreate'))
+                      }
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                        menuSubview === 'quickCreate'
+                          ? 'bg-[#FDE0E9] text-[#9D113C] rotate-45'
+                          : 'bg-[#ee2e65] text-white hover:brightness-105 shadow-xs'
+                      }`}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Subview: Main Navigation List */}
-              {menuSubview === 'nav' && (
+              {menuSubview === 'nav' && activeWorkspace === 'home' && (
+                <div className="overflow-y-auto p-2 space-y-2.5 overscroll-contain">
+                  {HOME_SIDEBAR_GROUPS.map((group) => (
+                    <div key={group.id} className="space-y-0.5">
+                      <div className="px-3 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+                        {group.label}
+                      </div>
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const isCurrent =
+                          item.workspaceId === 'home' && activeModulePage === 'main';
+                        return (
+                          <button
+                            key={item.workspaceId}
+                            type="button"
+                            onClick={() => {
+                              if (item.workspaceId === 'home') {
+                                setActiveModulePage('main');
+                              } else if (item.workspaceId === 'servolution') {
+                                enterWorkspace('servolution', { servolutionPage: 'overview' });
+                              } else {
+                                enterWorkspace(item.workspaceId);
+                              }
+                              closeMenuSmoothly();
+                            }}
+                            className={`touch-target-44 w-full flex items-center gap-2.5 px-3 py-2 rounded-full text-left transition-all duration-200 cursor-pointer ${
+                              isCurrent
+                                ? 'bg-[#ee2e65] text-white font-semibold shadow-[0_6px_16px_-6px_rgba(238,46,101,0.55)]'
+                                : 'text-[#1C1D21] hover:bg-[#F4F5F8] font-medium'
+                            }`}
+                          >
+                            <Icon
+                              className={`w-4 h-4 shrink-0 ${
+                                isCurrent ? 'text-white stroke-[2.2px]' : 'text-[#1C1D21] stroke-[1.8px]'
+                              }`}
+                            />
+                            <span className="text-[13px] truncate">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                  <div className="my-1 border-t border-black/[0.12] mx-2" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveModulePage('settings');
+                      closeMenuSmoothly();
+                    }}
+                    className={`touch-target-44 w-full flex items-center gap-2.5 px-3 py-2 rounded-full text-left transition-all duration-200 cursor-pointer ${
+                      activeModulePage === 'settings'
+                        ? 'bg-[#ee2e65] text-white font-semibold shadow-[0_6px_16px_-6px_rgba(238,46,101,0.55)]'
+                        : 'text-[#1C1D21] hover:bg-[#F4F5F8] font-medium'
+                    }`}
+                  >
+                    <Settings className="w-4 h-4 shrink-0" />
+                    <span className="text-[13px] truncate">Settings</span>
+                  </button>
+                </div>
+              )}
+
+              {menuSubview === 'nav' && activeWorkspace === 'servolution' && (
                 <div className="overflow-y-auto p-2 space-y-0.5 overscroll-contain">
                   {popupModules.map((item) => {
                     const Icon = item.icon;
@@ -401,7 +487,20 @@ export const MobileBottomNav: React.FC = () => {
                     return (
                       <React.Fragment key={item.id}>
                         {item.dividerBefore && (
-                          <div className="my-1 border-t border-black/[0.12] mx-2" />
+                          <>
+                            <div className="my-1 border-t border-black/[0.12] mx-2" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                goBackToHome();
+                                closeMenuSmoothly();
+                              }}
+                              className="touch-target-44 w-full flex items-center gap-2.5 px-3 py-2 rounded-full text-left text-[#1C1D21] hover:bg-[#FEF1F5] hover:text-[#ee2e65] font-medium transition-all duration-200 cursor-pointer"
+                            >
+                              <ArrowLeft className="w-4 h-4 shrink-0 stroke-[1.8px]" />
+                              <span className="text-[13px] truncate">Back to Home</span>
+                            </button>
+                          </>
                         )}
                         <button
                           type="button"
@@ -457,6 +556,62 @@ export const MobileBottomNav: React.FC = () => {
                   })}
                 </div>
               )}
+
+              {menuSubview === 'nav' &&
+                activeWorkspace !== 'home' &&
+                activeWorkspace !== 'servolution' && (
+                  <div className="overflow-y-auto p-2 space-y-0.5 overscroll-contain">
+                    {currentWorkspace.sidebarItems.map((item) => {
+                      const Icon = item.icon;
+                      const isCurrent = activeModulePage === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveModulePage(item.id);
+                            closeMenuSmoothly();
+                          }}
+                          className={`touch-target-44 w-full flex items-center gap-2.5 px-3 py-2 rounded-full text-left transition-all duration-200 cursor-pointer ${
+                            isCurrent
+                              ? 'bg-[#ee2e65] text-white font-semibold shadow-[0_6px_16px_-6px_rgba(238,46,101,0.55)]'
+                              : 'text-[#1C1D21] hover:bg-[#F4F5F8] font-medium'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span className="text-[13px] truncate">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                    <div className="my-1 border-t border-black/[0.12] mx-2" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        goBackToHome();
+                        closeMenuSmoothly();
+                      }}
+                      className="touch-target-44 w-full flex items-center gap-2.5 px-3 py-2 rounded-full text-left text-[#1C1D21] hover:bg-[#FEF1F5] hover:text-[#ee2e65] font-medium transition-all duration-200 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-4 h-4 shrink-0" />
+                      <span className="text-[13px] truncate">Back to Home</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveModulePage('settings');
+                        closeMenuSmoothly();
+                      }}
+                      className={`touch-target-44 w-full flex items-center gap-2.5 px-3 py-2 rounded-full text-left transition-all duration-200 cursor-pointer ${
+                        activeModulePage === 'settings'
+                          ? 'bg-[#ee2e65] text-white font-semibold shadow-[0_6px_16px_-6px_rgba(238,46,101,0.55)]'
+                          : 'text-[#1C1D21] hover:bg-[#F4F5F8] font-medium'
+                      }`}
+                    >
+                      <Settings className="w-4 h-4 shrink-0" />
+                      <span className="text-[13px] truncate">Settings</span>
+                    </button>
+                  </div>
+                )}
 
             {/* Subview: Notifications Drawer View */}
             {menuSubview === 'notifications' && (
@@ -623,39 +778,139 @@ export const MobileBottomNav: React.FC = () => {
             }}
           />
 
-          {primarySlots.map((slot, index) => {
-            const Icon = slot.icon;
-            const isActive = activeSlotIndex === index;
-            return (
+          {activeWorkspace === 'servolution' ? (
+            primarySlots.map((slot, index) => {
+              const Icon = slot.icon;
+              const isActive = activeSlotIndex === index;
+              return (
+                <button
+                  key={slot.id}
+                  ref={(el) => {
+                    slotRefs.current[index] = el;
+                  }}
+                  type="button"
+                  aria-label={slot.label}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => {
+                    setActivePage(slot.id);
+                    closeMenuSmoothly();
+                  }}
+                  className={`relative z-10 flex-1 h-10 rounded-full flex items-center justify-center transition-colors duration-200 cursor-pointer ${
+                    isActive ? 'text-white' : 'text-[#1C1D21] hover:text-[#ee2e65]'
+                  }`}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <Icon className={`w-[18px] h-[18px] ${isActive ? 'stroke-[2.2px]' : 'stroke-[1.9px]'}`} />
+                    {slot.dot && (
+                      <span
+                        className={`w-2 h-2 rounded-full absolute -top-0.5 -right-1 ring-[1.5px] ${
+                          isActive ? 'bg-white ring-[#ee2e65]' : 'bg-[#EF4444] ring-white'
+                        }`}
+                      />
+                    )}
+                  </div>
+                </button>
+              );
+            })
+          ) : activeWorkspace === 'home' ? (
+            <>
               <button
-                key={slot.id}
                 ref={(el) => {
-                  slotRefs.current[index] = el;
+                  slotRefs.current[0] = el;
                 }}
                 type="button"
-                aria-label={slot.label}
-                aria-current={isActive ? 'page' : undefined}
+                aria-label="Home"
                 onClick={() => {
-                  setActivePage(slot.id);
+                  setActiveModulePage('main');
                   closeMenuSmoothly();
                 }}
                 className={`relative z-10 flex-1 h-10 rounded-full flex items-center justify-center transition-colors duration-200 cursor-pointer ${
-                  isActive ? 'text-white' : 'text-[#1C1D21] hover:text-[#ee2e65]'
+                  activeSlotIndex === 0 ? 'text-white' : 'text-[#1C1D21] hover:text-[#ee2e65]'
                 }`}
               >
-                <div className="relative flex items-center justify-center">
-                  <Icon className={`w-[18px] h-[18px] ${isActive ? 'stroke-[2.2px]' : 'stroke-[1.9px]'}`} />
-                  {slot.dot && (
-                    <span
-                      className={`w-2 h-2 rounded-full absolute -top-0.5 -right-1 ring-[1.5px] ${
-                        isActive ? 'bg-white ring-[#ee2e65]' : 'bg-[#EF4444] ring-white'
-                      }`}
-                    />
-                  )}
-                </div>
+                <Home className="w-[18px] h-[18px]" />
               </button>
-            );
-          })}
+              <button
+                ref={(el) => {
+                  slotRefs.current[1] = el;
+                }}
+                type="button"
+                aria-label="Servolution"
+                onClick={() => {
+                  enterWorkspace('servolution', { servolutionPage: 'overview' });
+                  closeMenuSmoothly();
+                }}
+                className="relative z-10 flex-1 h-10 rounded-full flex items-center justify-center text-[#1C1D21] hover:text-[#ee2e65] transition-colors duration-200 cursor-pointer"
+              >
+                <HeartHandshake className="w-[18px] h-[18px]" />
+              </button>
+              <button
+                ref={(el) => {
+                  slotRefs.current[2] = el;
+                }}
+                type="button"
+                aria-label="Settings"
+                onClick={() => {
+                  setActiveModulePage('settings');
+                  closeMenuSmoothly();
+                }}
+                className={`relative z-10 flex-1 h-10 rounded-full flex items-center justify-center transition-colors duration-200 cursor-pointer ${
+                  activeSlotIndex === 2 ? 'text-white' : 'text-[#1C1D21] hover:text-[#ee2e65]'
+                }`}
+              >
+                <Settings className="w-[18px] h-[18px]" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                ref={(el) => {
+                  slotRefs.current[0] = el;
+                }}
+                type="button"
+                aria-label="Overview"
+                onClick={() => {
+                  setActiveModulePage('main');
+                  closeMenuSmoothly();
+                }}
+                className={`relative z-10 flex-1 h-10 rounded-full flex items-center justify-center transition-colors duration-200 cursor-pointer ${
+                  activeSlotIndex === 0 ? 'text-white' : 'text-[#1C1D21] hover:text-[#ee2e65]'
+                }`}
+              >
+                <LayoutGrid className="w-[18px] h-[18px]" />
+              </button>
+              <button
+                ref={(el) => {
+                  slotRefs.current[1] = el;
+                }}
+                type="button"
+                aria-label="Back to Home"
+                onClick={() => {
+                  goBackToHome();
+                  closeMenuSmoothly();
+                }}
+                className="relative z-10 flex-1 h-10 rounded-full flex items-center justify-center text-[#1C1D21] hover:text-[#ee2e65] transition-colors duration-200 cursor-pointer"
+              >
+                <ArrowLeft className="w-[18px] h-[18px]" />
+              </button>
+              <button
+                ref={(el) => {
+                  slotRefs.current[2] = el;
+                }}
+                type="button"
+                aria-label="Settings"
+                onClick={() => {
+                  setActiveModulePage('settings');
+                  closeMenuSmoothly();
+                }}
+                className={`relative z-10 flex-1 h-10 rounded-full flex items-center justify-center transition-colors duration-200 cursor-pointer ${
+                  activeSlotIndex === 2 ? 'text-white' : 'text-[#1C1D21] hover:text-[#ee2e65]'
+                }`}
+              >
+                <Settings className="w-[18px] h-[18px]" />
+              </button>
+            </>
+          )}
 
           {/* Slot 4: Overflow Menu Trigger (Shows active module icon + chevrons when an overflow module is active) */}
           <button

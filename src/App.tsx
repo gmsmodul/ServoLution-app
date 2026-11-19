@@ -8,8 +8,9 @@ import { ModalsContainer } from './components/modals/ModalsContainer';
 
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { ElasticPullToRefresh } from './components/ui/ElasticPullToRefresh';
-import { PageTransition } from './components/ui/PageTransition';
+import { PageTransition, getOrderedDirection } from './components/ui/PageTransition';
 import { apiService } from './services/api';
+import { WORKSPACE_ORDER } from './constants/workspaces';
 
 // Modular Page Components
 import { OverviewPage } from './components/pages/OverviewPage';
@@ -26,12 +27,23 @@ import { AnalyticsPage } from './components/pages/AnalyticsPage';
 import { ReportsPage } from './components/pages/ReportsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
 import { UiKitPage } from './components/pages/UiKitPage';
+import { HomePage } from './components/pages/HomePage';
+import { LibraryPage } from './components/pages/LibraryPage';
+import { FileManagerPage } from './components/pages/FileManagerPage';
+import { EmptyWorkspacePage } from './components/pages/EmptyWorkspacePage';
 import { QrDisplayPage } from './components/schedule/QrDisplayPage';
 import { LiveQuizHostTabPage } from './components/livequiz/LiveQuizHostTabPage';
 import { LiveQuizParticipantTabPage } from './components/livequiz/LiveQuizParticipantTabPage';
 
 function MainLayout() {
-  const { activePage, prevPage, triggerToast } = useApp();
+  const {
+    activeWorkspace,
+    prevWorkspace,
+    activeModulePage,
+    activePage,
+    prevPage,
+    triggerToast,
+  } = useApp();
 
   const handleWorkspaceRefresh = async () => {
     await Promise.all([
@@ -42,7 +54,7 @@ function MainLayout() {
     triggerToast('Data Diperbarui', 'Tampilan & ringkasan terbaru telah disinkronkan.', 'success');
   };
 
-  const renderActivePage = () => {
+  const renderServolutionPage = () => {
     switch (activePage) {
       case 'overview':
         return <OverviewPage />;
@@ -77,6 +89,16 @@ function MainLayout() {
     }
   };
 
+  const transitionKey =
+    activeWorkspace === 'servolution'
+      ? `servolution:${activePage}`
+      : `${activeWorkspace}:${activeModulePage}`;
+
+  const workspaceDirection =
+    activeWorkspace === 'servolution' && prevWorkspace === 'servolution'
+      ? undefined
+      : getOrderedDirection(prevWorkspace, activeWorkspace, WORKSPACE_ORDER);
+
   return (
     <div
       className="min-h-screen md:h-screen md:overflow-hidden bg-[#E8E9F0] p-2.5 sm:p-3.5 md:p-4 lg:p-5 font-sans text-[#1C1D21] flex items-stretch selection:bg-[#D6D4FF] selection:text-[#1C1D21]"
@@ -89,8 +111,23 @@ function MainLayout() {
           <Header />
 
           <ElasticPullToRefresh onRefresh={handleWorkspaceRefresh}>
-            <PageTransition activePage={activePage} prevPage={prevPage}>
-              {renderActivePage()}
+            <PageTransition
+              activePage={activePage}
+              prevPage={prevPage}
+              transitionKey={transitionKey}
+              directionOverride={workspaceDirection}
+            >
+              {activeWorkspace === 'servolution' ? (
+                renderServolutionPage()
+              ) : activeWorkspace === 'home' && activeModulePage === 'main' ? (
+                <HomePage />
+              ) : activeWorkspace === 'library' && activeModulePage !== 'settings' ? (
+                <LibraryPage />
+              ) : activeWorkspace === 'file-manager' && activeModulePage !== 'settings' ? (
+                <FileManagerPage />
+              ) : (
+                <EmptyWorkspacePage />
+              )}
             </PageTransition>
           </ElasticPullToRefresh>
         </main>

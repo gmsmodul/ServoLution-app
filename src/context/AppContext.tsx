@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   PageId,
+  WorkspaceId,
   ToastItem,
   Exam,
   ExamAssessmentRecord,
@@ -210,6 +211,12 @@ export function normalizeAttendanceClassKey(rawClassCode: string): string {
 }
 
 interface AppContextType {
+  activeWorkspace: WorkspaceId;
+  prevWorkspace: WorkspaceId;
+  activeModulePage: string;
+  setActiveModulePage: (subPage: string) => void;
+  enterWorkspace: (workspace: WorkspaceId, options?: { servolutionPage?: PageId }) => void;
+  goBackToHome: () => void;
   activePage: PageId;
   prevPage: PageId;
   setActivePage: (page: PageId) => void;
@@ -496,6 +503,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return Boolean(params.get('qrSession')?.trim());
   });
 
+  const [workspaceState, setWorkspaceState] = useState<{
+    active: WorkspaceId;
+    prev: WorkspaceId;
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (
+        params.get('page') === 'livequiz' ||
+        params.get('code') ||
+        params.get('page') === 'attendance' ||
+        params.get('qrSession')
+      ) {
+        return { active: 'servolution', prev: 'servolution' };
+      }
+    }
+    return { active: 'home', prev: 'home' };
+  });
+  const activeWorkspace = workspaceState.active;
+  const prevWorkspace = workspaceState.prev;
+  const [activeModulePage, setActiveModulePageState] = useState<string>('main');
+
   const [pageState, setPageState] = useState<{ active: PageId; prev: PageId }>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -510,13 +538,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const activePage = pageState.active;
   const prevPage = pageState.prev;
-  const setActivePage = (nextPage: PageId) => {
+
+  const enterWorkspace = useCallback(
+    (nextWorkspace: WorkspaceId, options?: { servolutionPage?: PageId }) => {
+      setWorkspaceState((curr) => {
+        if (curr.active !== nextWorkspace) {
+          playUiMotionSound('tick');
+          return { active: nextWorkspace, prev: curr.active };
+        }
+        return curr;
+      });
+      if (nextWorkspace === 'servolution') {
+        if (options?.servolutionPage) {
+          setPageState((curr) =>
+            curr.active === options.servolutionPage
+              ? curr
+              : { active: options.servolutionPage!, prev: curr.active }
+          );
+        }
+      } else {
+        setActiveModulePageState('main');
+      }
+    },
+    []
+  );
+
+  const goBackToHome = useCallback(() => {
+    enterWorkspace('home');
+  }, [enterWorkspace]);
+
+  const setActiveModulePage = useCallback((subPage: string) => {
+    setActiveModulePageState((curr) => {
+      if (curr === subPage) return curr;
+      playUiMotionSound('tick');
+      return subPage;
+    });
+  }, []);
+
+  const setActivePage = useCallback((nextPage: PageId) => {
+    setWorkspaceState((curr) =>
+      curr.active === 'servolution' ? curr : { active: 'servolution', prev: curr.active }
+    );
     setPageState((curr) => {
       if (curr.active === nextPage) return curr;
       playUiMotionSound('tick');
       return { active: nextPage, prev: curr.active };
     });
-  };
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
@@ -2649,6 +2717,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        activeWorkspace,
+        prevWorkspace,
+        activeModulePage,
+        setActiveModulePage,
+        enterWorkspace,
+        goBackToHome,
         activePage,
         prevPage,
         setActivePage,

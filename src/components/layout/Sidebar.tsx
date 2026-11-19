@@ -13,15 +13,21 @@ import {
   Settings,
   PanelLeft,
   Layers,
-  Camera,
   GraduationCap,
   Zap,
+  ArrowLeft,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PageId } from '../../types';
+import { HOME_SIDEBAR_GROUPS, WORKSPACES_REGISTRY } from '../../constants/workspaces';
 
 export const Sidebar: React.FC = () => {
   const {
+    activeWorkspace,
+    activeModulePage,
+    setActiveModulePage,
+    enterWorkspace,
+    goBackToHome,
     activePage,
     setActivePage,
     sidebarOpen,
@@ -29,7 +35,7 @@ export const Sidebar: React.FC = () => {
     materialsList,
   } = useApp();
 
-  const mainMenu = [
+  const servolutionMainMenu = [
     { id: 'overview' as PageId, label: 'Overview', icon: LayoutGrid, badge: '⌘ M', isTag: true },
     { id: 'materials' as PageId, label: 'Materials', icon: Library, badge: materialsList.length > 0 ? String(materialsList.length) : null },
     { id: 'prep' as PageId, label: 'Class Preparation', icon: BookOpen },
@@ -44,7 +50,7 @@ export const Sidebar: React.FC = () => {
     { id: 'reports' as PageId, label: 'Reports', icon: FileText },
   ];
 
-  const settingsMenu = [
+  const servolutionSettingsMenu = [
     { id: 'uikit' as PageId, label: 'UI Design System', icon: Layers, highlight: true },
   ];
 
@@ -57,9 +63,13 @@ export const Sidebar: React.FC = () => {
 
   useLayoutEffect(() => {
     const updateMenuIndicator = () => {
+      if (activeWorkspace !== 'servolution') {
+        setMenuIndicator((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+        return;
+      }
       const container = mainMenuRef.current;
       const activeBtn = activeMenuBtnRef.current;
-      const isMainActive = mainMenu.some((m) => m.id === activePage);
+      const isMainActive = servolutionMainMenu.some((m) => m.id === activePage);
       if (!container || !activeBtn || !isMainActive) {
         setMenuIndicator((prev) => (prev.visible ? { ...prev, visible: false } : prev));
         return;
@@ -80,7 +90,7 @@ export const Sidebar: React.FC = () => {
     const ro = new ResizeObserver(updateMenuIndicator);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [activePage, sidebarOpen]);
+  }, [activeWorkspace, activePage, sidebarOpen]);
 
   // Size scroll viewport so the last visible boundary item shows half its text when scrollable
   useLayoutEffect(() => {
@@ -129,10 +139,22 @@ export const Sidebar: React.FC = () => {
       ro?.disconnect();
       window.removeEventListener('resize', computePeekHeight);
     };
-  }, [sidebarOpen, materialsList.length]);
+  }, [activeWorkspace, sidebarOpen, materialsList.length]);
 
-  const handleNavClick = (id: PageId) => {
-    setActivePage(id);
+  const currentWorkspace = WORKSPACES_REGISTRY[activeWorkspace] || WORKSPACES_REGISTRY.home;
+  const BrandIcon = currentWorkspace.icon;
+
+  const isSettingsActive =
+    activeWorkspace === 'servolution'
+      ? activePage === 'settings'
+      : activeModulePage === 'settings';
+
+  const handleSettingsClick = () => {
+    if (activeWorkspace === 'servolution') {
+      setActivePage('settings');
+    } else {
+      setActiveModulePage('settings');
+    }
   };
 
   return (
@@ -141,158 +163,296 @@ export const Sidebar: React.FC = () => {
         sidebarOpen ? 'w-[260px]' : 'w-[84px]'
       } p-4 select-none`}
     >
-        {/* Brand Logo Header */}
-        <div className="shrink-0 flex items-center justify-between px-2 pt-1 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#ee2e65] flex items-center justify-center text-white shadow-[0_4px_12px_-3px_rgba(238,46,101,0.45)] shrink-0">
-              <Camera className="w-4 h-4 text-white" />
-            </div>
-            {sidebarOpen && (
-              <span className="font-semibold text-[16px] tracking-tight text-[#1C1D21]">Servolution</span>
-            )}
+      {/* Brand Logo Header */}
+      <div className="shrink-0 flex items-center justify-between px-2 pt-1 pb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-[#ee2e65] flex items-center justify-center text-white shadow-[0_4px_12px_-3px_rgba(238,46,101,0.45)] shrink-0">
+            <BrandIcon className="w-4 h-4 text-white" />
           </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            title="Toggle Sidebar"
-            className="hidden md:flex w-8 h-8 rounded-lg hover:bg-black/5 items-center justify-center text-[#6E717A] transition-colors cursor-pointer"
-          >
-            <PanelLeft className="w-4 h-4" />
-          </button>
+          {sidebarOpen && (
+            <span className="font-semibold text-[16px] tracking-tight text-[#1C1D21] truncate">
+              {currentWorkspace.brandName}
+            </span>
+          )}
         </div>
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          title="Toggle Sidebar"
+          className="hidden md:flex w-8 h-8 rounded-lg hover:bg-black/5 items-center justify-center text-[#6E717A] transition-colors shrink-0 cursor-pointer"
+        >
+          <PanelLeft className="w-4 h-4" />
+        </button>
+      </div>
 
-        {/* Scrollable Navigation Region (scrollbar hidden, boundary menu text peeks at 50%) */}
-        <div ref={scrollWrapperRef} className="flex-1 min-h-0 flex flex-col">
-          <div
-            ref={scrollContainerRef}
-            className="overflow-y-auto no-scrollbar"
-            style={peekMaxHeight !== null ? { maxHeight: `${peekMaxHeight}px` } : undefined}
-          >
-            {/* Main Menu Group */}
-            <div ref={mainMenuRef} className="relative space-y-1">
-              <span
-                aria-hidden="true"
-                className={`pointer-events-none absolute left-0 right-0 top-0 rounded-lg bg-white shadow-xs transition-[transform,height,opacity] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
-                  menuIndicator.visible ? 'opacity-100' : 'opacity-0'
-                }`}
-                style={{
-                  height: `${menuIndicator.height}px`,
-                  transform: `translate3d(0, ${menuIndicator.top}px, 0)`,
-                }}
-              />
+      {/* Scrollable Navigation Region (scrollbar hidden, boundary menu text peeks at 50%) */}
+      <div ref={scrollWrapperRef} className="flex-1 min-h-0 flex flex-col">
+        <div
+          ref={scrollContainerRef}
+          className="overflow-y-auto no-scrollbar"
+          style={peekMaxHeight !== null ? { maxHeight: `${peekMaxHeight}px` } : undefined}
+        >
+          {/* 1. MULTIMEDIA MAIN HOME SIDEBAR */}
+          {activeWorkspace === 'home' && (
+            <div className="space-y-4 pb-2">
+              {HOME_SIDEBAR_GROUPS.map((group, groupIdx) => {
+                const isSubSection = group.collapsible;
+                return (
+                  <div key={group.id} className="space-y-1">
+                    {sidebarOpen ? (
+                      <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                        {group.label}
+                      </div>
+                    ) : (
+                      groupIdx > 0 && <div className="mx-2 my-2 border-t border-black/[0.08]" />
+                    )}
+
+                    <div
+                      className={`space-y-1 ${
+                        sidebarOpen && isSubSection
+                          ? 'ml-3 pl-2.5 border-l border-black/[0.10] mt-0.5'
+                          : ''
+                      }`}
+                    >
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive =
+                          item.workspaceId === 'home' && activeModulePage === 'main';
+                        return (
+                          <button
+                            key={item.workspaceId}
+                            type="button"
+                            data-sidebar-item="true"
+                            title={!sidebarOpen ? item.label : undefined}
+                            onClick={() => {
+                              if (item.workspaceId === 'home') {
+                                setActiveModulePage('main');
+                              } else if (item.workspaceId === 'servolution') {
+                                enterWorkspace('servolution', { servolutionPage: 'overview' });
+                              } else {
+                                enterWorkspace(item.workspaceId);
+                              }
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group cursor-pointer ${
+                              isActive
+                                ? 'bg-white text-gray-900 font-semibold shadow-xs'
+                                : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <Icon
+                                className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
+                                  isActive
+                                    ? 'text-[#ee2e65]'
+                                    : 'text-gray-500 group-hover:text-gray-900'
+                                }`}
+                              />
+                              {sidebarOpen && <span className="truncate">{item.label}</span>}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 2. SERVOLUTION DEDICATED SIDEBAR (EXISTING FULL MENU) */}
+          {activeWorkspace === 'servolution' && (
+            <>
+              <div ref={mainMenuRef} className="relative space-y-1">
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute left-0 right-0 top-0 rounded-lg bg-white shadow-xs transition-[transform,height,opacity] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+                    menuIndicator.visible ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{
+                    height: `${menuIndicator.height}px`,
+                    transform: `translate3d(0, ${menuIndicator.top}px, 0)`,
+                  }}
+                />
+                {sidebarOpen && (
+                  <div className="relative z-10 px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Main menu
+                  </div>
+                )}
+                {servolutionMainMenu.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-sidebar-item="true"
+                      title={!sidebarOpen ? item.label : undefined}
+                      ref={isActive ? activeMenuBtnRef : undefined}
+                      onClick={() => setActivePage(item.id)}
+                      className={`relative z-10 w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group cursor-pointer ${
+                        isActive
+                          ? `text-gray-900 font-semibold ${menuIndicator.visible ? '' : 'bg-white shadow-xs'}`
+                          : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon
+                          className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
+                            isActive ? 'text-[#ee2e65]' : 'text-gray-500 group-hover:text-gray-900'
+                          }`}
+                        />
+                        {sidebarOpen && <span className="truncate">{item.label}</span>}
+                      </div>
+                      {sidebarOpen &&
+                        item.badge &&
+                        (item.isTag ? (
+                          <span className="text-xs font-semibold bg-[#F0EFFC] text-[#3F3B99] px-1.5 py-0.5 rounded-md">
+                            {item.badge}
+                          </span>
+                        ) : (
+                          <span className="min-w-5 h-5 px-1.5 rounded-full bg-[#FEF1F5] text-[#9D113C] text-xs font-semibold flex items-center justify-center">
+                            {item.badge}
+                          </span>
+                        ))}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* System & UI Kit Group */}
+              <div className="mt-5 pb-2 space-y-1">
+                {sidebarOpen && (
+                  <div className="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    System & UI Kit
+                  </div>
+                )}
+                {servolutionSettingsMenu.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-sidebar-item="true"
+                      title={!sidebarOpen ? item.label : undefined}
+                      onClick={() => setActivePage(item.id)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
+                        isActive
+                          ? 'bg-[#ee2e65] text-white font-semibold shadow-xs'
+                          : item.highlight
+                          ? 'bg-primary-50 text-primary-700 font-semibold hover:bg-primary-100'
+                          : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon className="w-4 h-4 shrink-0" />
+                        {sidebarOpen && <span className="truncate">{item.label}</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* 3. DEDICATED SIDEBAR FOR EACH SEPARATE MODULE WORKSPACE */}
+          {activeWorkspace !== 'home' && activeWorkspace !== 'servolution' && (
+            <div className="space-y-1 pb-2">
               {sidebarOpen && (
-                <div className="relative z-10 px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <div className="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Main menu
                 </div>
               )}
-              {mainMenu.map((item) => {
+              {currentWorkspace.sidebarItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activePage === item.id;
+                const isActive = activeModulePage === item.id;
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     data-sidebar-item="true"
-                    ref={isActive ? activeMenuBtnRef : undefined}
-                    onClick={() => handleNavClick(item.id)}
-                    className={`relative z-10 w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group cursor-pointer ${
+                    title={!sidebarOpen ? item.label : undefined}
+                    onClick={() => setActiveModulePage(item.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group cursor-pointer ${
                       isActive
-                        ? `text-gray-900 font-semibold ${menuIndicator.visible ? '' : 'bg-white shadow-xs'}`
+                        ? 'bg-white text-gray-900 font-semibold shadow-xs'
                         : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <Icon className={`w-4 h-4 shrink-0 transition-colors duration-200 ${isActive ? 'text-[#ee2e65]' : 'text-gray-500 group-hover:text-gray-900'}`} />
-                      {sidebarOpen && <span className="truncate">{item.label}</span>}
-                    </div>
-                    {sidebarOpen && item.badge && (
-                      item.isTag ? (
-                        <span className="text-xs font-semibold bg-[#F0EFFC] text-[#3F3B99] px-1.5 py-0.5 rounded-md">
-                          {item.badge}
-                        </span>
-                      ) : (
-                        <span className="min-w-5 h-5 px-1.5 rounded-full bg-[#FEF1F5] text-[#9D113C] text-xs font-semibold flex items-center justify-center">
-                          {item.badge}
-                        </span>
-                      )
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* System & UI Kit Group */}
-            <div className="mt-5 pb-2 space-y-1">
-              {sidebarOpen && (
-                <div className="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  System & UI Kit
-                </div>
-              )}
-              {settingsMenu.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePage === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    data-sidebar-item="true"
-                    onClick={() => handleNavClick(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
-                      isActive
-                        ? 'bg-[#ee2e65] text-white font-semibold shadow-xs'
-                        : item.highlight
-                        ? 'bg-primary-50 text-primary-700 font-semibold hover:bg-primary-100'
-                        : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors duration-200 ${
+                          isActive ? 'text-[#ee2e65]' : 'text-gray-500 group-hover:text-gray-900'
+                        }`}
+                      />
                       {sidebarOpen && <span className="truncate">{item.label}</span>}
                     </div>
                   </button>
                 );
               })}
             </div>
-          </div>
+          )}
         </div>
+      </div>
 
-        {/* Bottom Settings & Teacher Profile */}
-        <div className="shrink-0 pt-3 mt-2 border-t border-black/[0.12] space-y-2.5">
+      {/* Bottom Back to Home (when inside any sub-workspace), Settings & Profile */}
+      <div className="shrink-0 pt-3 mt-2 border-t border-black/[0.12] space-y-2">
+        <div className="space-y-1">
+          {activeWorkspace !== 'home' && (
+            <button
+              type="button"
+              onClick={goBackToHome}
+              title={!sidebarOpen ? 'Back to Home' : undefined}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/70 hover:text-[#ee2e65] transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 shrink-0 text-gray-600 group-hover:text-[#ee2e65] transition-colors" />
+              {sidebarOpen && <span className="truncate">Back to Home</span>}
+            </button>
+          )}
+
           <button
-            onClick={() => setActivePage('settings')}
+            type="button"
+            onClick={handleSettingsClick}
+            title={!sidebarOpen ? 'Settings' : undefined}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
-              activePage === 'settings'
+              isSettingsActive
                 ? 'bg-white text-gray-900 font-semibold shadow-xs'
                 : 'font-medium text-gray-700 hover:bg-white/70 hover:text-gray-900'
             }`}
           >
             <Settings
               className={`w-4 h-4 shrink-0 ${
-                activePage === 'settings' ? 'text-[#ee2e65]' : 'text-gray-600'
+                isSettingsActive ? 'text-[#ee2e65]' : 'text-gray-600'
               }`}
             />
             {sidebarOpen && <span>Settings</span>}
           </button>
+        </div>
 
-          <div className="px-2">
-            {sidebarOpen && (
-              <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 px-1">Account</div>
-            )}
-            <div className="flex items-center gap-3 p-1.5 rounded-2xl hover:bg-white/70 transition-colors cursor-pointer">
-              <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
-                alt="Rasengan"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://placehold.co/80x80/1C1D21/FFFFFF?text=RS';
-                }}
-                className="w-9 h-9 rounded-full object-cover border border-black/[0.10] shadow-xs shrink-0"
-              />
-              {sidebarOpen && (
-                <div className="min-w-0">
-                  <div className="text-[13px] font-semibold text-[#1C1D21] truncate">Rasengan</div>
-                  <div className="text-[11px] text-[#646772]">Teacher</div>
-                </div>
-              )}
+        <div className="px-2 pt-0.5">
+          {sidebarOpen && (
+            <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 px-1">
+              Account
             </div>
+          )}
+          <div className="flex items-center gap-3 p-1.5 rounded-2xl hover:bg-white/70 transition-colors cursor-pointer">
+            <img
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
+              alt="Rasengan"
+              onError={(e) => {
+                e.currentTarget.src = 'https://placehold.co/80x80/1C1D21/FFFFFF?text=RS';
+              }}
+              className="w-9 h-9 rounded-full object-cover border border-black/[0.10] shadow-xs shrink-0"
+            />
+            {sidebarOpen && (
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold text-[#1C1D21] truncate">Rasengan</div>
+                <div className="text-[11px] text-[#646772]">Teacher</div>
+              </div>
+            )}
           </div>
         </div>
-      </aside>
+      </div>
+    </aside>
   );
 };

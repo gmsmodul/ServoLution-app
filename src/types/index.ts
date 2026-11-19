@@ -624,3 +624,19 @@ export type PageId =
   | 'reports'
   | 'settings'
   | 'uikit';
+
+export type WorkspaceId =
+  | 'home'
+  | 'servolution'
+  | 'library'
+  | 'workspace'
+  | 'editing-project'
+  | 'calendar'
+  | 'hdd-list'
+  | 'live-camera'
+  | 'development'
+  | 'technical-support'
+  | 'user-manager'
+  | 'data-manager'
+  | 'file-manager';
+

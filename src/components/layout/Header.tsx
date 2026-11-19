@@ -24,14 +24,16 @@ import {
   RotateCcw,
   WifiOff,
   RefreshCw,
+  Home,
 } from 'lucide-react';
 import { playUiMotionSound } from '../../utils/uiMotionSound';
 import { AnimatePresence, motion } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { PASTEL_THEMES } from '../../constants/theme';
+import { WORKSPACES_REGISTRY, WORKSPACE_ORDER } from '../../constants/workspaces';
 import { PageId, PastelThemeKey } from '../../types';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { getPageDirection } from '../ui/PageTransition';
+import { getOrderedDirection, getPageDirection } from '../ui/PageTransition';
 import { HorizontalSlideTrack } from '../ui/HorizontalSlideTrack';
 
 type SearchCategoryFilter =
@@ -81,6 +83,10 @@ const SEARCH_MODULES: Array<{
 
 export const Header: React.FC = () => {
   const {
+    activeWorkspace,
+    prevWorkspace,
+    activeModulePage,
+    enterWorkspace,
     activePage,
     prevPage,
     setActivePage,
@@ -110,7 +116,10 @@ export const Header: React.FC = () => {
   } = useApp();
 
   const isMobile = useIsMobile();
-  const direction = getPageDirection(prevPage, activePage, isMobile);
+  const direction =
+    activeWorkspace === 'servolution' && prevWorkspace === 'servolution'
+      ? getPageDirection(prevPage, activePage, isMobile)
+      : getOrderedDirection(prevWorkspace, activeWorkspace, WORKSPACE_ORDER);
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsFilter, setNotificationsFilter] = useState<'All' | 'Unread' | 'Reminders'>('All');
@@ -234,13 +243,34 @@ export const Header: React.FC = () => {
     const close = () => setIsGlobalSearchOpen(false);
     const list: SearchEntry[] = [];
 
+    WORKSPACE_ORDER.forEach((wsId) => {
+      const ws = WORKSPACES_REGISTRY[wsId];
+      list.push({
+        id: `ws-${ws.id}`,
+        category: 'Modules',
+        title: ws.label,
+        desc: `${ws.groupLabel} · Multimedia Workspace`,
+        meta: ws.groupLabel,
+        badge: ws.keywords.split(' ')[0],
+        theme: ws.theme,
+        onSelect: () => {
+          if (ws.id === 'servolution') {
+            enterWorkspace('servolution', { servolutionPage: 'overview' });
+          } else {
+            enterWorkspace(ws.id);
+          }
+          close();
+        },
+      });
+    });
+
     SEARCH_MODULES.forEach((mod) => {
       list.push({
         id: `mod-${mod.id}`,
         category: 'Modules',
         title: mod.label,
         desc: mod.desc,
-        meta: 'Page',
+        meta: 'Servolution',
         badge: mod.keywords.split(' ')[0],
         theme: mod.theme,
         onSelect: () => {
@@ -387,6 +417,7 @@ export const Header: React.FC = () => {
     return list;
   }, [
     assignments,
+    enterWorkspace,
     exams,
     liveQuizzes,
     materialsList,
@@ -469,8 +500,39 @@ export const Header: React.FC = () => {
     uikit: { title: 'Design System & UI Components', icon: Layers, iconClass: 'text-[#9D113C]' },
   };
 
-  const currentMeta = pageMeta[activePage] || pageMeta.overview;
+  const currentWorkspace = WORKSPACES_REGISTRY[activeWorkspace] || WORKSPACES_REGISTRY.home;
+
+  const currentMeta: {
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+    iconClass?: string;
+  } = (() => {
+    if (activeWorkspace === 'servolution') {
+      return pageMeta[activePage] || pageMeta.overview;
+    }
+    if (activeModulePage === 'settings') {
+      return { title: 'Settings', icon: Settings };
+    }
+    if (activeWorkspace === 'home') {
+      return { title: 'Home', icon: Home };
+    }
+    const activeItem =
+      currentWorkspace.sidebarItems.find((item) => item.id === activeModulePage) ||
+      currentWorkspace.sidebarItems[0];
+    return {
+      title: activeItem?.label || 'Overview',
+      icon: activeItem?.icon || LayoutGrid,
+    };
+  })();
+
   const CurrentPageIcon = currentMeta.icon;
+  const headerCrumbKey =
+    activeWorkspace === 'servolution'
+      ? `servolution:${activePage}`
+      : `${activeWorkspace}:${activeModulePage}`;
+  const showMobileWelcome =
+    (activeWorkspace === 'servolution' && activePage === 'overview') ||
+    (activeWorkspace === 'home' && activeModulePage === 'main');
 
   const searchCategories: SearchCategoryFilter[] = [
     'All',
@@ -487,12 +549,12 @@ export const Header: React.FC = () => {
   return (
     <header className="relative z-30 h-16 px-4 sm:px-7 border-b border-black/[0.12] flex items-center justify-between gap-3 sm:gap-4 shrink-0 bg-white/80 backdrop-blur-sm no-print">
       <div className="relative flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-        {/* Mobile Header Left: Profile on Overview, Page Title on other pages */}
+        {/* Mobile Header Left: Profile on Home/Overview, Page Title on other pages */}
         <div className="flex md:hidden items-center min-w-0 flex-1 relative">
           <AnimatePresence mode="popLayout" initial={false}>
-            {activePage === 'overview' ? (
+            {showMobileWelcome ? (
               <motion.div
-                key="mobile-header-overview"
+                key={`mobile-header-welcome-${activeWorkspace}`}
                 initial={{ opacity: 0, x: direction * 14 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: direction * -12 }}
@@ -518,7 +580,7 @@ export const Header: React.FC = () => {
               </motion.div>
             ) : (
               <motion.div
-                key={`mobile-header-${activePage}`}
+                key={`mobile-header-${headerCrumbKey}`}
                 initial={{ opacity: 0, x: direction * 14 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: direction * -12 }}
@@ -527,7 +589,9 @@ export const Header: React.FC = () => {
               >
                 <CurrentPageIcon className={`w-[18px] h-[18px] shrink-0 ${currentMeta.iconClass || 'text-[#1C1D21]'}`} />
                 <h1 className="text-[17px] font-semibold tracking-tight text-[#1C1D21] truncate">
-                  {currentMeta.title}
+                  {activeWorkspace === 'servolution' || activeModulePage === 'settings'
+                    ? currentMeta.title
+                    : currentWorkspace.brandName}
                 </h1>
               </motion.div>
             )}
@@ -536,12 +600,12 @@ export const Header: React.FC = () => {
 
         {/* Tablet & PC Breadcrumbs */}
         <nav className="hidden md:flex items-center gap-2 text-[13px] min-w-0">
-          <span className="text-[#646772] font-medium shrink-0">Servolution</span>
+          <span className="text-[#646772] font-medium shrink-0">{currentWorkspace.brandName}</span>
           <ChevronRight className="w-3.5 h-3.5 text-[#8A8D98] shrink-0" />
           <div className="relative flex items-center min-w-0 overflow-hidden py-0.5">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
-                key={`desktop-crumb-${activePage}`}
+                key={`desktop-crumb-${headerCrumbKey}`}
                 initial={{ opacity: 0, y: direction * 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: direction * -8 }}
