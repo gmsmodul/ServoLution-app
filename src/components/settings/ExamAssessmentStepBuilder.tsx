@@ -650,8 +650,8 @@ export const ExamAssessmentStepBuilder: React.FC<ExamAssessmentStepBuilderProps>
   return (
     <>
       {/* MAIN TABLE LIST OF EXISTING SCALES */}
-      <div className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
-        <div className="px-5 sm:px-6 py-4 bg-[#FAFBFD] border-b border-black/[0.06] flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
+        <div className="px-5 sm:px-6 py-4 bg-[#FAFBFD] border-b border-black/[0.08] flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-[16px] font-semibold text-[#1C1D21]">
               Daftar Skala &amp; Parameter Penilaian Exams
@@ -675,14 +675,14 @@ export const ExamAssessmentStepBuilder: React.FC<ExamAssessmentStepBuilderProps>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[760px]">
             <thead>
-              <tr className="bg-white border-b border-black/[0.06] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+              <tr className="bg-white border-b border-black/[0.08] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
                 <th className="py-3 px-5">Assessment Scale</th>
                 <th className="py-3 px-4">Tombol Nilai (100% ÷ Pilihan)</th>
                 <th className="py-3 px-4">Position Terpasang</th>
                 <th className="py-3 px-5 text-right w-[160px]">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/[0.05] text-[13px]">
+            <tbody className="divide-y divide-black/[0.08] text-[13px]">
               {savedConfig.scales.map((scale) => {
                 const sortedOpts = [...scale.options].sort((a, b) => a.value - b.value);
                 const linkedPositions = savedConfig.positions.filter(
@@ -802,11 +802,11 @@ export const ExamAssessmentStepBuilder: React.FC<ExamAssessmentStepBuilderProps>
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl border border-black/[0.08] shadow-2xl flex flex-col overflow-hidden"
+            className="w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl border border-black/[0.12] shadow-2xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Top Header */}
-            <div className="px-5 sm:px-6 py-4 bg-white border-b border-black/[0.06] flex items-center justify-between gap-3 shrink-0">
+            <div className="px-5 sm:px-6 py-4 bg-white border-b border-black/[0.08] flex items-center justify-between gap-3 shrink-0">
               <div>
                 <h2 className="text-[16px] sm:text-[17px] font-semibold text-[#1C1D21]">
                   Pembuatan Parameter &amp; Skala Penilaian Exams

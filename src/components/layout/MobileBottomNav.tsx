@@ -28,6 +28,7 @@ import { useApp } from '../../context/AppContext';
 import { PageId } from '../../types';
 import { PASTEL_THEMES } from '../../constants/theme';
 import { useBottomSheetMotion } from '../../hooks/useBottomSheetMotion';
+import { playUiMotionSound } from '../../utils/uiMotionSound';
 
 export const MobileBottomNav: React.FC = () => {
   const {
@@ -73,18 +74,20 @@ export const MobileBottomNav: React.FC = () => {
       window.clearTimeout(menuCloseTimerRef.current);
       menuCloseTimerRef.current = null;
     }
+    playUiMotionSound('pop');
     setMenuClosing(false);
     setMenuOpen(true);
   };
 
   const closeMenuSmoothly = () => {
     if (!menuOpen || menuClosing) return;
+    playUiMotionSound('tick');
     setMenuClosing(true);
     menuCloseTimerRef.current = window.setTimeout(() => {
       setMenuOpen(false);
       setMenuClosing(false);
       menuCloseTimerRef.current = null;
-    }, 220);
+    }, 200);
   };
 
   useEffect(() => {
@@ -336,15 +339,15 @@ export const MobileBottomNav: React.FC = () => {
             menuClosing ? 'animate-ui-fade-out' : 'animate-ui-fade'
           } fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] md:hidden no-print`}
         >
-          <div className="fixed bottom-[68px] inset-x-4 max-w-[352px] mx-auto pointer-events-none">
+          <div className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] inset-x-4 max-w-[352px] mx-auto pointer-events-none">
             <div
               onClick={(e) => e.stopPropagation()}
               className={`${
                 menuClosing ? 'animate-menu-fold-down' : 'animate-menu-fold-up'
-              } pointer-events-auto w-[min(272px,100%)] max-h-[calc(100vh-92px)] bg-white rounded-[24px] shadow-[0_20px_48px_-12px_rgba(15,23,42,0.28)] border border-black/[0.06] flex flex-col overflow-hidden`}
+              } pointer-events-auto w-[min(272px,100%)] max-h-[calc(100vh-92px)] bg-white rounded-[24px] shadow-[0_20px_48px_-12px_rgba(15,23,42,0.28)] border border-black/[0.14] flex flex-col overflow-hidden`}
             >
               {/* Top Profile & Quick Utility Header */}
-              <div className="px-3.5 pt-3 pb-2.5 border-b border-black/[0.05] flex items-center justify-between gap-2 shrink-0">
+              <div className="px-3.5 pt-3 pb-2.5 border-b border-black/[0.12] flex items-center justify-between gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => handleSelectPage('overview')}
@@ -398,12 +401,12 @@ export const MobileBottomNav: React.FC = () => {
                     return (
                       <React.Fragment key={item.id}>
                         {item.dividerBefore && (
-                          <div className="my-1 border-t border-black/[0.06] mx-2" />
+                          <div className="my-1 border-t border-black/[0.12] mx-2" />
                         )}
                         <button
                           type="button"
                           onClick={() => handleSelectPage(item.id)}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-full text-left transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer ${
+                          className={`touch-target-44 w-full flex items-center justify-between px-3 py-2 rounded-full text-left transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
                             isCurrent
                               ? 'bg-[#ee2e65] text-white font-semibold shadow-[0_6px_16px_-6px_rgba(238,46,101,0.55)]'
                               : 'text-[#1C1D21] hover:bg-[#F4F5F8] font-medium'
@@ -601,17 +604,17 @@ export const MobileBottomNav: React.FC = () => {
       )}
 
       {/* Compact One-Handed Floating Bottom Navigation Bar + Detached Search Button */}
-      <div className="fixed bottom-3 inset-x-4 max-w-[352px] mx-auto z-40 md:hidden flex items-center gap-2 no-print">
+      <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] inset-x-4 max-w-[352px] mx-auto z-40 md:hidden flex items-center gap-2 no-print">
         {/* Main Floating Pill Dock */}
         <nav
           ref={pillBarRef}
           aria-label="Mobile navigation"
-          className="relative flex-1 bg-white/95 backdrop-blur-md rounded-full p-1 shadow-[0_10px_28px_-8px_rgba(15,23,42,0.18)] border border-black/[0.06] flex items-center justify-between"
+          className="relative flex-1 bg-white/95 backdrop-blur-md rounded-full p-1 shadow-[0_10px_28px_-8px_rgba(15,23,42,0.18)] border border-black/[0.14] flex items-center justify-between"
         >
           {/* Gliding Brand-Primary Active Pill */}
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute top-1 bottom-1 left-0 rounded-full bg-[#ee2e65] shadow-[0_5px_14px_-4px_rgba(238,46,101,0.55)] transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.22,1.24,0.36,1)] ${
+            className={`pointer-events-none absolute top-1 bottom-1 left-0 rounded-full bg-[#ee2e65] shadow-[0_5px_14px_-4px_rgba(238,46,101,0.55)] transition-[transform,width,opacity] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
               indicator.ready ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
@@ -670,7 +673,7 @@ export const MobileBottomNav: React.FC = () => {
             {isOverflowActive && ActiveOverflowIcon && (
               <ActiveOverflowIcon className="w-[17px] h-[17px] stroke-[2.1px] shrink-0" />
             )}
-            <ChevronsUpDown className={`w-[15px] h-[15px] stroke-[2.1px] shrink-0 transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] ${menuOpen && !menuClosing ? 'scale-110' : ''}`} />
+            <ChevronsUpDown className={`w-[15px] h-[15px] stroke-[2.1px] shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${menuOpen && !menuClosing ? 'scale-110' : ''}`} />
           </button>
         </nav>
 
@@ -680,12 +683,13 @@ export const MobileBottomNav: React.FC = () => {
           aria-label="Search modules, students, and materials"
           onClick={() => {
             closeMenuSmoothly();
+            playUiMotionSound('pop');
             setSearchOpen(true);
           }}
           className={`w-12 h-12 shrink-0 rounded-full backdrop-blur-md shadow-[0_10px_28px_-8px_rgba(15,23,42,0.18)] border flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer ${
             searchOpen
               ? 'bg-[#ee2e65] text-white border-[#ee2e65]'
-              : 'bg-white/95 text-[#1C1D21] border-black/[0.06] hover:text-[#ee2e65]'
+              : 'bg-white/95 text-[#1C1D21] border-black/[0.14] hover:text-[#ee2e65]'
           }`}
         >
           <Search className="w-[18px] h-[18px] stroke-[2px]" />
@@ -702,25 +706,26 @@ export const MobileBottomNav: React.FC = () => {
           <div
             ref={setSearchSheetEl}
             {...searchGestureProps}
-            className="w-full bg-white rounded-t-[28px] p-5 pb-7 space-y-4 shadow-2xl max-h-[82vh] flex flex-col animate-bottom-sheet"
+            className="w-full bg-white rounded-t-[28px] p-5 pb-[calc(1.75rem+env(safe-area-inset-bottom,0px))] space-y-4 shadow-2xl max-h-[82vh] flex flex-col animate-bottom-sheet"
           >
             <div
               data-sheet-handle="true"
               className="flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none shrink-0"
             >
-              <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+              <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <div className="flex-1 flex items-center gap-2.5 bg-[#F4F5F8] rounded-full px-4 py-2.5 border border-black/[0.04] focus-within:border-[#ee2e65] focus-within:bg-white transition-colors">
-                <Search className="w-4 h-4 text-[#8A8D98] shrink-0" />
+              <div className="flex-1 flex items-center gap-2.5 bg-[#F4F5F8] rounded-full px-4 py-2.5 border border-black/[0.12] focus-within:border-[#ee2e65] focus-within:bg-white transition-colors">
+                <Search className="w-4 h-4 text-[#646772] shrink-0" />
                 <input
                   ref={searchInputRef}
                   type="text"
+                  enterKeyHint="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cari modul, siswa, atau materi..."
-                  className="w-full bg-transparent text-[13.5px] text-[#1C1D21] placeholder:text-[#8A8D98] outline-none"
+                  className="w-full bg-transparent text-[13.5px] text-[#1C1D21] placeholder:text-[#646772] outline-none"
                 />
                 {searchQuery && (
                   <button

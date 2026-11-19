@@ -120,9 +120,9 @@ export const QrDisplayPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F3F4F8] text-[#1C1D21] p-4 sm:p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-4xl bg-white rounded-3xl border border-black/[0.08] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.08)] overflow-hidden grid grid-cols-1 md:grid-cols-12">
+      <div className="w-full max-w-4xl bg-white rounded-3xl border border-black/[0.12] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.08)] overflow-hidden grid grid-cols-1 md:grid-cols-12">
         {/* Left: Scannable Classroom QR Code Only */}
-        <div className="md:col-span-6 p-7 sm:p-9 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-black/[0.06] bg-white">
+        <div className="md:col-span-6 p-7 sm:p-9 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-black/[0.08] bg-white">
           <div className="inline-flex items-center gap-2 text-[12px] font-semibold text-[#9D113C] bg-[#FEF1F5] px-3 py-1 rounded-full mb-3">
             <QrCode className="w-3.5 h-3.5" />
             <span>{normalizeAttendanceClassKey(sessionSpec.classCode)}</span>
@@ -167,7 +167,7 @@ export const QrDisplayPage: React.FC = () => {
 
         {/* Right: Scanned Crew Names Only */}
         <div className="md:col-span-6 flex flex-col bg-[#FAFBFD]/50">
-          <div className="px-6 py-5 bg-white border-b border-black/[0.06] flex items-center justify-between">
+          <div className="px-6 py-5 bg-white border-b border-black/[0.08] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Users className="w-4.5 h-4.5 text-[#ee2e65]" />
               <h2 className="text-[15px] font-semibold text-[#1C1D21]">
@@ -179,7 +179,7 @@ export const QrDisplayPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-black/[0.05] max-h-[460px]">
+          <div className="flex-1 overflow-y-auto divide-y divide-black/[0.08] max-h-[460px]">
             {scannedList.length === 0 ? (
               <div className="h-full min-h-[260px] flex flex-col items-center justify-center text-center p-8 text-[#8A8D98]">
                 <QrCode className="w-8 h-8 mb-2.5 opacity-35" />

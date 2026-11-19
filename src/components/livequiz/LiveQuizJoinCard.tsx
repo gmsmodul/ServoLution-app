@@ -66,7 +66,7 @@ export const LiveQuizJoinCard: React.FC<LiveQuizJoinCardProps> = ({
       className={
         embedded
           ? 'p-5 sm:p-6 bg-[#FAFBFD] rounded-b-2xl'
-          : 'bg-[#FAFBFD] rounded-2xl border border-black/[0.07] p-5 sm:p-6'
+          : 'bg-[#FAFBFD] rounded-2xl border border-black/[0.12] p-5 sm:p-6'
       }
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

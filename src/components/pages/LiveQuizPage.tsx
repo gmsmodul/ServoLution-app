@@ -511,10 +511,11 @@ export const LiveQuizPage: React.FC = () => {
             <Search className="w-4 h-4 text-[#8A8D98] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              enterKeyHint="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari kuis atau mapel..."
-              className="w-full sm:w-auto h-9 pl-9 pr-4 rounded-full border border-black/[0.09] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
+              className="w-full sm:w-auto h-9 pl-9 pr-4 rounded-full border border-black/[0.12] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
             />
           </div>
           <button
@@ -599,7 +600,7 @@ export const LiveQuizPage: React.FC = () => {
             return (
               <div
                 key={quiz.id}
-                className="bg-white rounded-2xl border border-black/[0.07] p-5 flex flex-col justify-between gap-4 hover:border-black/[0.15] transition-colors"
+                className="bg-white rounded-2xl border border-black/[0.12] p-5 flex flex-col justify-between gap-4 hover:border-black/[0.2] transition-colors"
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
@@ -721,7 +722,7 @@ export const LiveQuizPage: React.FC = () => {
             return (
               <div
                 key={rep.id}
-                className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden"
+                className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden"
               >
                 <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1 min-w-0">

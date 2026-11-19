@@ -361,13 +361,13 @@ export const AttendancePage: React.FC = () => {
         {/* Left Columns */}
         <div className="md:col-span-5 lg:col-span-4 space-y-5">
           {/* Compact Calendar */}
-          <div className="bg-white rounded-2xl p-5 border border-black/[0.07]">
+          <div className="bg-white rounded-2xl p-5 border border-black/[0.12]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrevMonth}
                   aria-label="Bulan sebelumnya"
-                  className="w-7 h-7 rounded-full border border-black/[0.09] flex items-center justify-center hover:bg-[#FAFBFD] cursor-pointer"
+                  className="w-7 h-7 rounded-full border border-black/[0.12] flex items-center justify-center hover:bg-[#FAFBFD] cursor-pointer"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
@@ -377,7 +377,7 @@ export const AttendancePage: React.FC = () => {
                 <button
                   onClick={handleNextMonth}
                   aria-label="Bulan berikutnya"
-                  className="w-7 h-7 rounded-full border border-black/[0.09] flex items-center justify-center hover:bg-[#FAFBFD] cursor-pointer"
+                  className="w-7 h-7 rounded-full border border-black/[0.12] flex items-center justify-center hover:bg-[#FAFBFD] cursor-pointer"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -388,7 +388,7 @@ export const AttendancePage: React.FC = () => {
                   setCalMonth(1);
                   setAttendanceDay(9);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-black/[0.09] text-[12px] font-medium hover:bg-[#FAFBFD] cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-black/[0.12] text-[12px] font-medium hover:bg-[#FAFBFD] cursor-pointer"
               >
                 <Filter className="w-3 h-3" />
                 <span>Filter</span>
@@ -427,7 +427,7 @@ export const AttendancePage: React.FC = () => {
           </div>
 
           {/* Unified Segmented Progress Summary Block */}
-          <div className="rounded-2xl border border-black/[0.06] divide-y divide-black/[0.06] overflow-hidden">
+          <div className="rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden">
             <div className="p-4 bg-[#E6F9F0] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#10B981]">
@@ -503,14 +503,14 @@ export const AttendancePage: React.FC = () => {
               ? { height: activeColConfig ? expandedHeight || baseHeight : baseHeight }
               : undefined
           }
-          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
-          className="md:col-span-7 lg:col-span-8 bg-white rounded-2xl border border-black/[0.07] overflow-hidden self-start relative"
+          transition={{ duration: 0.26, ease: [0.23, 1, 0.32, 1] }}
+          className="md:col-span-7 lg:col-span-8 bg-white rounded-2xl border border-black/[0.12] overflow-hidden self-start relative"
         >
           {/* Base 3-Category Grid (always in steady flow so closing never jumps) */}
           <div
             ref={baseLayerRef}
             aria-hidden={Boolean(activeColConfig)}
-            className={`grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.06] relative z-0 ${
+            className={`grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.08] relative z-0 ${
               activeColConfig ? 'pointer-events-none' : ''
             }`}
           >
@@ -522,7 +522,7 @@ export const AttendancePage: React.FC = () => {
               return (
                 <div key={col.key} className="flex flex-col">
                   <div
-                    className={`flex items-center justify-between px-4 py-3.5 ${col.headerBg} border-b border-black/[0.06]`}
+                    className={`flex items-center justify-between px-4 py-3.5 ${col.headerBg} border-b border-black/[0.08]`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <ColIcon className={`w-4 h-4 shrink-0 ${col.iconColor}`} />
@@ -552,7 +552,7 @@ export const AttendancePage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="divide-y divide-black/[0.05] flex-1">
+                  <div className="divide-y divide-black/[0.06] flex-1">
                     {visibleItems.length === 0 ? (
                       <div className="text-center py-8 text-[12px] text-[#9496A1]">No records</div>
                     ) : (
@@ -575,13 +575,13 @@ export const AttendancePage: React.FC = () => {
                     initial={{ clipPath: activeColConfig.clipFrom }}
                     animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
                     exit={{ clipPath: activeColConfig.clipFrom }}
-                    transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 0.26, ease: [0.23, 1, 0.32, 1] }}
                     className="absolute inset-x-0 top-0 min-h-full z-10 bg-white flex flex-col w-full"
                   >
                     <div ref={expandedMeasureRef} className="flex flex-col flex-none">
                       {/* Expanded Single-Category Header Spanning Full 3 Columns */}
                       <div
-                        className={`relative flex items-center justify-center px-4 h-[53px] ${activeColConfig.solidHeaderBg} border-b border-black/[0.06]`}
+                        className={`relative flex items-center justify-center px-4 h-[53px] ${activeColConfig.solidHeaderBg} border-b border-black/[0.08]`}
                       >
                         <motion.button
                           type="button"
@@ -600,7 +600,7 @@ export const AttendancePage: React.FC = () => {
                           initial={{ left: activeColConfig.headerStartLeft, x: '-50%' }}
                           animate={{ left: '50%', x: '-50%' }}
                           exit={{ left: activeColConfig.headerStartLeft, x: '-50%' }}
-                          transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+                          transition={{ duration: 0.26, ease: [0.23, 1, 0.32, 1] }}
                           className="absolute inset-y-0 flex items-center gap-2 whitespace-nowrap"
                         >
                           <ActiveIcon className={`w-4 h-4 shrink-0 ${activeColConfig.iconColor}`} />
@@ -624,7 +624,7 @@ export const AttendancePage: React.FC = () => {
                             className="flex select-none"
                             style={{ touchAction: totalSlides > 1 ? 'pan-y' : 'auto' }}
                             animate={{ x: `-${safeSlideIndex * 100}%` }}
-                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                            transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
                             onPanEnd={(_event, info) => {
                               if (totalSlides <= 1) return;
                               if (info.offset.x < -45 || info.velocity.x < -300) {

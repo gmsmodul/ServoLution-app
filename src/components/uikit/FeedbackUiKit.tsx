@@ -16,16 +16,28 @@ import {
   Play,
   Pause,
   RefreshCw,
+  Search,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { UiDocPage, UiDocSection } from './UiDocBlock';
+import {
+  UiSkeleton,
+  UiSkeletonGroup,
+  UiSkeletonCard,
+  UiSkeletonList,
+  UiSkeletonTable,
+  UiSkeletonSearchPanel,
+} from '../ui/UiSkeleton';
+import { UiLoader } from '../ui/UiLoader';
+import { LoadingAnimationsUiKit } from './LoadingAnimationsUiKit';
 
 interface FeedbackUiKitProps {
   activeSubJump?: string;
 }
 
 export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) => {
-  const { triggerToast, setUiSweetAlertType, setUiSessionModal } = useApp();
+  const { triggerToast, setUiSweetAlertType, setUiSessionModal, selectUiNode } = useApp();
 
   // Notifications
   const [notifPos, setNotifPos] = useState<'top-right' | 'bottom-right' | 'top-center'>('top-right');
@@ -62,6 +74,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
   // Placeholders & Skeleton
   const [placeholderAnim, setPlaceholderAnim] = useState<'pulse' | 'wave'>('pulse');
   const [skeletonLoaded, setSkeletonLoaded] = useState(false);
+  const [searchSkeletonState, setSearchSkeletonState] = useState<'loading-empty' | 'loading-results' | 'loaded'>('loading-empty');
 
   // Spinners
   const [spinnerBtnLoading, setSpinnerBtnLoading] = useState(true);
@@ -79,7 +92,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
 
   // Clipboard
   const [clipboardCopied, setClipboardCopied] = useState(false);
-  const codeSnippet = 'npm install @servolution/ui-core --save';
+  const codeSnippet = 'npm install @uikit/core --save';
 
   const isVisible = (itemKey: string) => {
     if (!activeSubJump) return true;
@@ -239,7 +252,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>With Title & Icon ({notifPos})</span>
                   </div>
-                  <button onClick={() => setNotifVisible(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+                  <button onClick={() => setNotifVisible(false)} className="text-gray-500 hover:text-gray-800 cursor-pointer">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -261,7 +274,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             classesHint="inline-flex items-center gap-1 font-semibold text-primary-600 hover:underline"
             codeSnippet={`<a href="#notif-url" className="inline-flex items-center gap-1 font-semibold text-primary-600">\n  Buka Custom URL <ExternalLink className="w-3 h-3" />\n</a>`}
           >
-            <div className="max-w-md p-4 bg-white rounded-xl border border-gray-200 shadow-xs space-y-1.5 text-xs">
+            <div className="max-w-md p-4 bg-white rounded-xl border border-gray-300 shadow-xs space-y-1.5 text-xs">
               <div className="font-bold text-gray-900">Pembaruan Silabus Semester</div>
               <p className="text-gray-600">Dokumen revisi silabus siap ditinjau oleh pengajar wali.</p>
               <a
@@ -314,7 +327,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
               {toastInverseOpen ? (
                 <div className="animate-ui-pop p-2.5 px-3.5 rounded-lg bg-gray-900 text-white flex items-center justify-between">
                   <span>Tostr Inverse (Dark Surface)</span>
-                  <button onClick={() => setToastInverseOpen(false)} className="text-gray-400 hover:text-white cursor-pointer">
+                  <button onClick={() => setToastInverseOpen(false)} className="text-gray-300 hover:text-white cursor-pointer">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -682,9 +695,9 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             title="Neutral Content Skeleton"
             description="Skeleton selalu memakai warna abu-abu netral agar tidak terbaca sebagai indikator status (merah/kuning/hijau), dengan proporsi yang mengikuti struktur konten akhirnya."
             classesHint="bg-gray-100 / bg-gray-200 (netral tanpa warna status)"
-            codeSnippet={`<div className="p-4 rounded-xl border border-gray-200 bg-white space-y-3">\n  <div className="h-3.5 bg-gray-200 rounded w-1/3" />\n  <div className="h-2.5 bg-gray-100 rounded w-1/4" />\n  <div className="h-3 bg-gray-100 rounded w-full" />\n  <div className="h-7 bg-gray-200 rounded-lg w-28" />\n</div>`}
+            codeSnippet={`<div className="p-4 rounded-xl border border-gray-300 bg-white space-y-3">\n  <div className="h-3.5 bg-gray-200 rounded w-1/3" />\n  <div className="h-2.5 bg-gray-100 rounded w-1/4" />\n  <div className="h-3 bg-gray-100 rounded w-full" />\n  <div className="h-7 bg-gray-200 rounded-lg w-28" />\n</div>`}
           >
-            <div className="max-w-sm p-4 rounded-xl border border-gray-200 bg-white space-y-3">
+            <div className="max-w-sm p-4 rounded-xl border border-gray-300 bg-white space-y-3">
               <div className="space-y-1.5">
                 <div className="h-3.5 bg-gray-200 rounded w-2/5" />
                 <div className="h-2.5 bg-gray-100 rounded w-1/3" />
@@ -759,48 +772,49 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
       {isVisible('skeleton') && (
         <UiDocPage
           title="Skeleton"
+          description="Komponen reusable <UiSkeleton /> memakai kelas .ui-skeleton-shimmer agar loading state konsisten untuk avatar, kartu, tabel, daftar, serta panel Search, Recent Search & Suggestion Search."
           subLinks={[
             { id: 'skl-profile', label: 'Profile & Avatar' },
             { id: 'skl-card', label: 'Card Skeleton' },
             { id: 'skl-table', label: 'Table Rows Skeleton' },
             { id: 'skl-list', label: 'List & Feed Skeleton' },
+            { id: 'skl-search', label: 'Search, Recent & Suggestion' },
           ]}
         >
           <UiDocSection
             id="skl-profile"
             title="Profile & Avatar Skeleton"
-            classesHint="animate-pulse flex items-center gap-3.5"
-            codeSnippet={`<div className="animate-pulse flex items-center gap-3.5">\n  <div className="w-12 h-12 rounded-full bg-gray-200" />\n  <div className="space-y-2 flex-1">\n    <div className="h-3.5 bg-gray-200 rounded w-40" />\n    <div className="h-2.5 bg-gray-100 rounded w-28" />\n  </div>\n</div>`}
+            classesHint="<UiSkeleton variant='circular' /> · .ui-skeleton-shimmer"
+            codeSnippet={`<UiSkeletonGroup label="Memuat profil...">\n  <div className="flex items-center gap-3.5">\n    <UiSkeleton variant="circular" width={48} height={48} />\n    <UiSkeleton variant="text" lines={2} lastLineWidth="64%" className="flex-1" />\n    <UiSkeleton variant="rounded" width={64} height={28} />\n  </div>\n</UiSkeletonGroup>`}
           >
-            <div className="max-w-md animate-pulse flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0" />
-              <div className="space-y-2 flex-1">
-                <div className="h-3.5 bg-gray-200 rounded-md w-44" />
-                <div className="h-2.5 bg-gray-100 rounded-md w-28" />
+            <UiSkeletonGroup label="Memuat profil..." className="max-w-md flex items-center gap-3.5">
+              <UiSkeleton variant="circular" width={48} height={48} />
+              <div className="flex-1 min-w-0">
+                <UiSkeleton variant="text" lines={2} lastLineWidth="64%" />
               </div>
-              <div className="h-7 w-16 rounded-lg bg-gray-200 shrink-0" />
-            </div>
+              <UiSkeleton variant="rounded" className="h-7 w-16 rounded-lg" />
+            </UiSkeletonGroup>
           </UiDocSection>
 
           <UiDocSection
             id="skl-card"
             title="Card Skeleton"
-            classesHint="rounded-xl border border-gray-200 p-4 animate-pulse"
-            codeSnippet={`<div className="rounded-xl border border-gray-200 p-4 space-y-3 animate-pulse">\n  <div className="h-32 rounded-lg bg-gray-200" />\n  <div className="h-3.5 bg-gray-200 rounded w-3/4" />\n  <div className="h-2.5 bg-gray-100 rounded w-full" />\n</div>`}
+            classesHint="<UiSkeletonCard /> · .ui-skeleton-shimmer"
+            codeSnippet={`<UiSkeletonCard showMedia showFooter lines={3} />`}
             actions={
               <button
                 type="button"
                 onClick={() => setSkeletonLoaded(!skeletonLoaded)}
-                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
               >
-                <RefreshCw className="w-3.5 h-3.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-90" />
+                <RefreshCw className="w-3.5 h-3.5 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:rotate-90" />
                 <span>{skeletonLoaded ? 'Tampilkan Skeleton' : 'Simulasikan Selesai'}</span>
               </button>
             }
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
               {skeletonLoaded ? (
-                <div key="loaded" className="animate-ui-fade rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                <div key="loaded" className="animate-ui-fade rounded-xl border border-gray-300 bg-white p-4 space-y-3">
                   <div className="h-28 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm">
                     Kalkulus IV · Modul Video HD
                   </div>
@@ -820,81 +834,106 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
                   </div>
                 </div>
               ) : (
-                <div key="skeleton" className="animate-ui-fade rounded-xl border border-gray-200 bg-white p-4 space-y-3 animate-pulse">
-                  <div className="h-28 rounded-lg bg-gray-200" />
-                  <div className="space-y-2">
-                    <div className="h-3.5 bg-gray-200 rounded w-3/4" />
-                    <div className="h-2.5 bg-gray-100 rounded w-full" />
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="h-3 bg-gray-200 rounded w-16" />
-                    <div className="h-7 bg-gray-200 rounded-lg w-24" />
-                  </div>
-                </div>
+                <UiSkeletonCard key="skeleton" className="animate-ui-fade" lines={2} />
               )}
 
-              <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3 animate-pulse">
-                <div className="h-28 rounded-lg bg-gray-200" />
-                <div className="space-y-2">
-                  <div className="h-3.5 bg-gray-200 rounded w-2/3" />
-                  <div className="h-2.5 bg-gray-100 rounded w-5/6" />
-                </div>
-                <div className="flex items-center justify-between pt-1">
-                  <div className="h-3 bg-gray-200 rounded w-14" />
-                  <div className="h-7 bg-gray-200 rounded-lg w-24" />
-                </div>
-              </div>
+              <UiSkeletonCard lines={2} />
             </div>
           </UiDocSection>
 
           <UiDocSection
             id="skl-table"
             title="Table Rows Skeleton"
-            classesHint="divide-y divide-gray-100 animate-pulse"
-            codeSnippet={`<div className="border border-gray-200 rounded-xl divide-y divide-gray-100 animate-pulse">\n  {[1,2,3].map(r => <div key={r} className="px-4 py-3 flex items-center justify-between gap-4">...</div>)}\n</div>`}
+            classesHint="<UiSkeletonTable rows={4} columns={3} /> · .ui-skeleton-shimmer"
+            codeSnippet={`<UiSkeletonTable rows={4} columns={3} />`}
           >
-            <div className="max-w-2xl border border-gray-200 rounded-xl overflow-hidden bg-white">
-              <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200 grid grid-cols-12 gap-3 text-[11px] font-semibold text-gray-500">
-                <span className="col-span-5">Siswa</span>
-                <span className="col-span-4">Kelas</span>
-                <span className="col-span-3 text-right">Status</span>
-              </div>
-              <div className="divide-y divide-gray-100 animate-pulse">
-                {[1, 2, 3, 4].map((row) => (
-                  <div key={row} className="px-4 py-3 grid grid-cols-12 items-center gap-3">
-                    <div className="col-span-5 flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 shrink-0" />
-                      <div className="h-3 bg-gray-200 rounded w-28" />
-                    </div>
-                    <div className="col-span-4">
-                      <div className="h-2.5 bg-gray-100 rounded w-20" />
-                    </div>
-                    <div className="col-span-3 flex justify-end">
-                      <div className="h-5 bg-gray-200 rounded-md w-14" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <UiSkeletonTable rows={4} columns={3} className="max-w-2xl" />
           </UiDocSection>
 
           <UiDocSection
             id="skl-list"
             title="List & Feed Skeleton"
-            classesHint="space-y-3 animate-pulse"
-            codeSnippet={`<div className="space-y-3 animate-pulse">\n  {[1,2,3].map(i => <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100">...</div>)}\n</div>`}
+            classesHint="<UiSkeletonList rows={3} /> · .ui-skeleton-shimmer"
+            codeSnippet={`<UiSkeletonList rows={3} showAvatar showTrailing />`}
           >
-            <div className="max-w-lg space-y-2.5 animate-pulse">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white">
-                  <div className="w-9 h-9 rounded-lg bg-gray-200 shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 bg-gray-200 rounded w-3/5" />
-                    <div className="h-2.5 bg-gray-100 rounded w-4/5" />
+            <UiSkeletonList rows={3} className="max-w-lg" />
+          </UiDocSection>
+
+          <UiDocSection
+            id="skl-search"
+            title="Search, Recent & Suggestion Skeleton"
+            description="Skeleton shimmer terstruktur untuk state loading saat membuka recent search, memuat suggestion chips, dan memfilter hasil pencarian secara real-time."
+            classesHint="<UiSkeletonSearchPanel mode='recent-and-suggestions' | 'results' /> · .ui-skeleton-shimmer"
+            actions={
+              <div className="inline-flex items-center rounded-full border border-gray-300 bg-gray-100/80 p-0.5 text-xs">
+                {(
+                  [
+                    { key: 'loading-empty', label: 'Recent & Saran' },
+                    { key: 'loading-results', label: 'Loading Hasil' },
+                    { key: 'loaded', label: 'Siap' },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setSearchSkeletonState(opt.key)}
+                    className={`px-2.5 py-1 rounded-full font-medium whitespace-nowrap cursor-pointer ${
+                      searchSkeletonState === opt.key ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-600'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            }
+            codeSnippet={`<UiSkeletonSearchPanel mode="recent-and-suggestions" />\n<UiSkeletonSearchPanel mode="results" rows={3} />`}
+          >
+            <div className="max-w-md rounded-xl border border-gray-300 bg-white overflow-hidden shadow-xs">
+              <div className="px-3.5 py-2.5 border-b border-gray-200 flex items-center gap-2.5 bg-gray-50/70">
+                <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="text-xs text-gray-500">
+                  {searchSkeletonState === 'loading-results'
+                    ? 'Mencari "Skeleton"...'
+                    : 'Cari komponen, recent search, atau saran...'}
+                </span>
+              </div>
+              {searchSkeletonState === 'loading-empty' && (
+                <UiSkeletonSearchPanel mode="recent-and-suggestions" />
+              )}
+              {searchSkeletonState === 'loading-results' && (
+                <UiSkeletonSearchPanel mode="results" rows={3} />
+              )}
+              {searchSkeletonState === 'loaded' && (
+                <div className="p-3 space-y-3 animate-ui-fade">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-gray-500 px-1">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Pencarian Terakhir
+                      </span>
+                      <span className="text-[#ee2e65]">Hapus</span>
+                    </div>
+                    <div className="px-2.5 py-1.5 rounded-lg bg-gray-50 text-xs font-medium text-gray-800 flex items-center justify-between">
+                      <span>UiSkeleton</span>
+                      <span className="text-[11px] text-gray-500">4. Feedback</span>
+                    </div>
                   </div>
-                  <div className="w-12 h-3 bg-gray-100 rounded shrink-0" />
+                  <div className="space-y-1.5">
+                    <div className="text-[11px] font-semibold text-gray-500 px-1 inline-flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-[#ee2e65]" /> Saran Pencarian
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 px-1">
+                      {['Page Search', 'Motion & Animations', 'Kanban Board'].map((sug) => (
+                        <span
+                          key={sug}
+                          className="px-2.5 py-1 rounded-full bg-[#FEF1F5] border border-[#FBC2D4] text-[11px] font-medium text-[#9D113C]"
+                        >
+                          {sug}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </UiDocSection>
         </UiDocPage>
@@ -911,6 +950,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             { id: 'spn-sizes', label: 'Sizes' },
             { id: 'spn-align', label: 'Alignment & Text' },
             { id: 'spn-buttons', label: 'Buttons' },
+            { id: 'spn-20-loaders', label: '20 Loading Animations' },
           ]}
         >
           <UiDocSection
@@ -968,11 +1008,11 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             codeSnippet={`<div className="flex items-center justify-center gap-2.5 py-4">\n  <Loader2 className="w-5 h-5 text-primary-600 animate-spin" />\n  <span className="text-xs font-medium text-gray-600">Memuat data akademik...</span>\n</div>`}
           >
             <div className="space-y-3 max-w-md text-xs">
-              <div className="flex items-center justify-center gap-2.5 py-4 rounded-xl border border-dashed border-gray-200 bg-gray-50/70">
+              <div className="flex items-center justify-center gap-2.5 py-4 rounded-xl border border-dashed border-gray-300 bg-gray-50/70">
                 <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />
                 <span className="font-medium text-gray-600">Memuat daftar siswa...</span>
               </div>
-              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg border border-gray-200 bg-white">
+              <div className="flex items-center justify-between px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white">
                 <span className="font-medium text-gray-700">Sinkronisasi nilai ujian</span>
                 <span className="w-4 h-4 rounded-full border-2 border-primary-600 border-t-transparent animate-spin" />
               </div>
@@ -987,16 +1027,70 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
           >
             <button
               onClick={() => setSpinnerBtnLoading(!spinnerBtnLoading)}
-              className="px-4 py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold inline-flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold inline-grid place-items-center cursor-pointer transition-colors"
             >
-              {spinnerBtnLoading && (
+              <span
+                aria-hidden={!spinnerBtnLoading}
+                className={`[grid-area:1/1] inline-flex items-center gap-2 transition-opacity duration-150 ${
+                  spinnerBtnLoading ? 'opacity-100' : 'opacity-0 invisible'
+                }`}
+              >
                 <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              )}
-              <span>{spinnerBtnLoading ? 'Loading Button...' : 'Klik untuk Aktifkan Loading'}</span>
+                <span>Loading Button...</span>
+              </span>
+              <span
+                className={`[grid-area:1/1] transition-opacity duration-150 ${
+                  spinnerBtnLoading ? 'opacity-0 invisible' : 'opacity-100'
+                }`}
+              >
+                Klik untuk Aktifkan Loading
+              </span>
             </button>
+          </UiDocSection>
+
+          <UiDocSection
+            id="spn-20-loaders"
+            title="20 Loading Animations (loader/spinner-arc & Koleksi Modern)"
+            description="Koleksi lengkap 20 animasi loading modern (Spinner Arc, Dual Ring, Morphing Blob, Newton Dots, Orbital Atom, dan lainnya) tersedia di sub-halaman Loading Animations."
+            classesHint="<UiLoader variant='spinner-arc' size='lg' color='#C6F135' />"
+            actions={
+              <button
+                type="button"
+                onClick={() => selectUiNode('feedback', 'Loading Animations', 'ldr-stage')}
+                className="px-3 py-1 rounded-full bg-[#121418] text-[#C6F135] text-xs font-semibold hover:brightness-110 cursor-pointer"
+              >
+                Buka 20 Loaders →
+              </button>
+            }
+            codeSnippet={`<UiLoader variant="spinner-arc" size="lg" color="#C6F135" />\n<UiLoader variant="orbital-atom" size="lg" color="#C6F135" />`}
+          >
+            <div className="rounded-xl bg-[#121418] border border-gray-900 p-4 flex flex-wrap items-center justify-around gap-4">
+              {(
+                [
+                  { id: 'spinner-arc', label: '1. Spinner Arc' },
+                  { id: 'dual-ring', label: '2. Dual Ring' },
+                  { id: 'morph-blob', label: '3. Morph Blob' },
+                  { id: 'newton-dots', label: '4. Newton Dots' },
+                  { id: 'orbital-atom', label: '10. Orbital Atom' },
+                ] as const
+              ).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => selectUiNode('feedback', 'Loading Animations', 'ldr-stage')}
+                  className="flex flex-col items-center gap-2 p-2.5 rounded-xl hover:bg-white/[0.05] transition-colors cursor-pointer"
+                >
+                  <UiLoader variant={item.id} size="md" color="#C6F135" />
+                  <span className="text-[11px] font-medium text-gray-300">{item.label}</span>
+                </button>
+              ))}
+            </div>
           </UiDocSection>
         </UiDocPage>
       )}
+
+      {/* 4.8B 20 LOADING ANIMATIONS */}
+      {isVisible('loadinganimations') && <LoadingAnimationsUiKit />}
 
       {/* 4.9 PROGRESS BAR */}
       {(isVisible('progressbar') || isVisible('progress')) && (
@@ -1033,7 +1127,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             }
           >
             <div className="max-w-xl w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
-              <div className="bg-primary-600 h-full transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ width: `${progressVal}%` }} />
+              <div className="bg-primary-600 h-full transition-all duration-[260ms] ease-[cubic-bezier(0.23,1,0.32,1)]" style={{ width: `${progressVal}%` }} />
             </div>
           </UiDocSection>
 
@@ -1045,7 +1139,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
           >
             <div className="max-w-xl w-full bg-gray-200 h-4 rounded-full overflow-hidden">
               <div
-                className="bg-primary-600 h-full rounded-full text-[11px] font-bold text-white flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] tabular-nums"
+                className="bg-primary-600 h-full rounded-full text-[11px] font-bold text-white flex items-center justify-center transition-all duration-[260ms] ease-[cubic-bezier(0.23,1,0.32,1)] tabular-nums"
                 style={{ width: `${progressVal}%` }}
               >
                 {progressVal}%
@@ -1099,7 +1193,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
           >
             <div className="max-w-xl w-full bg-gray-200 h-3 rounded-sm overflow-hidden">
               <div
-                className="h-full bg-emerald-500 bg-[linear-gradient(45deg,rgba(255,255,255,.25)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.25)_50%,rgba(255,255,255,.25)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                className="h-full bg-emerald-500 bg-[linear-gradient(45deg,rgba(255,255,255,.25)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.25)_50%,rgba(255,255,255,.25)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] transition-all duration-[260ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
                 style={{ width: `${progressVal}%` }}
               />
             </div>
@@ -1114,7 +1208,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
               <button
                 type="button"
                 onClick={() => setProgressAnimated(!progressAnimated)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
               >
                 {progressAnimated ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 <span>{progressAnimated ? 'Jeda Animasi' : 'Jalankan Animasi'}</span>
@@ -1123,7 +1217,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
           >
             <div className="max-w-xl w-full bg-gray-200 h-3 rounded-full overflow-hidden">
               <div
-                className={`h-full bg-primary-600 bg-[linear-gradient(45deg,rgba(255,255,255,.28)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.28)_50%,rgba(255,255,255,.28)_75%,transparent_75%,transparent)] bg-[length:1.25rem_1.25rem] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`h-full bg-primary-600 bg-[linear-gradient(45deg,rgba(255,255,255,.28)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.28)_50%,rgba(255,255,255,.28)_75%,transparent_75%,transparent)] bg-[length:1.25rem_1.25rem] transition-all duration-[260ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
                   progressAnimated ? 'animate-ui-stripes' : ''
                 }`}
                 style={{ width: `${progressVal}%` }}
@@ -1179,7 +1273,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
                           r={r}
                           strokeWidth="3"
                           strokeLinecap="round"
-                          className={`${ring.stroke} fill-none transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]`}
+                          className={`${ring.stroke} fill-none transition-all duration-[260ms] ease-[cubic-bezier(0.23,1,0.32,1)]`}
                           strokeDasharray={c}
                           strokeDashoffset={offset}
                         />
@@ -1212,7 +1306,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             id="lds-lifecycle"
             title="Async Lifecycle Switcher (Idle / Loading / Success / Error)"
             description="Uji perubahan kondisi UI secara langsung antara status diam, memuat, berhasil, dan gagal."
-            classesHint="rounded-xl border border-gray-200 bg-white p-4"
+            classesHint="rounded-xl border border-gray-300 bg-white p-4"
             codeSnippet={`{phase === 'loading' && <LoadingCard />}\n{phase === 'error' && <ErrorRetryCard onRetry={refetch} />}\n{phase === 'success' && <DataSummaryCard />}`}
           >
             <div className="max-w-xl space-y-3 text-xs">
@@ -1253,7 +1347,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
               )}
 
               {asyncPhase === 'loading' && (
-                <div key="loading" className="animate-ui-fade p-4 rounded-xl border border-gray-200 bg-white space-y-3">
+                <div key="loading" className="animate-ui-fade p-4 rounded-xl border border-gray-300 bg-white space-y-3">
                   <div className="flex items-center gap-2 text-primary-700 font-semibold">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Mengambil data presensi kelas 302...</span>
@@ -1311,7 +1405,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
                     }}
                     className="group px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold hover:bg-rose-700 inline-flex items-center gap-1.5 cursor-pointer shrink-0"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-rotate-90" />
+                    <RotateCcw className="w-3.5 h-3.5 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:-rotate-90" />
                     <span>Coba Lagi</span>
                   </button>
                 </div>
@@ -1345,7 +1439,7 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
                   onClick={() => triggerToast('Mencoba Ulang', 'Menghubungkan kembali ke server...', 'info')}
                   className="group px-3 py-1.5 rounded-lg bg-rose-600 text-white font-semibold hover:bg-rose-700 inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-90" />
+                  <RefreshCw className="w-3.5 h-3.5 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:rotate-90" />
                   <span>Kirim Ulang</span>
                 </button>
               </div>
@@ -1444,16 +1538,16 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
           <UiDocSection
             id="bt-basic"
             title="Basic"
-            classesHint="bg-white rounded-xl border border-gray-200 shadow-md"
-            codeSnippet={`<div className="p-3.5 bg-white rounded-xl border border-gray-200 shadow-md">\n  <div className="font-bold pb-1.5 border-b">Servolution Core</div>\n  <p className="text-xs text-gray-600 pt-1.5">Backup database berhasil disimpan.</p>\n</div>`}
+            classesHint="bg-white rounded-xl border border-gray-300 shadow-md"
+            codeSnippet={`<div className="p-3.5 bg-white rounded-xl border border-gray-300 shadow-md">\n  <div className="font-bold pb-1.5 border-b">UI KIT Core</div>\n  <p className="text-xs text-gray-600 pt-1.5">Backup database berhasil disimpan.</p>\n</div>`}
           >
-            <div className="max-w-sm p-3.5 bg-white rounded-xl border border-gray-200 shadow-md space-y-2 text-xs">
-              <div className="flex items-center justify-between pb-1.5 border-b border-gray-100">
+            <div className="max-w-sm p-3.5 bg-white rounded-xl border border-gray-300 shadow-md space-y-2 text-xs">
+              <div className="flex items-center justify-between pb-1.5 border-b border-gray-300">
                 <div className="flex items-center gap-2 font-bold text-gray-900">
                   <span className="w-2 h-2 rounded-full bg-primary-600" />
-                  <span>Servolution Core</span>
+                  <span>UI KIT Core</span>
                 </div>
-                <span className="text-[11px] text-gray-400">11m lalu</span>
+                <span className="text-[11px] text-gray-500">11m lalu</span>
               </div>
               <p className="text-gray-600">Backup otomatis database silabus berhasil disimpan.</p>
             </div>
@@ -1466,15 +1560,15 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
             codeSnippet={`{show ? <Toast onClose={() => setShow(false)} /> : <button onClick={() => setShow(true)}>Tampilkan Toast</button>}`}
           >
             {showCornerToast ? (
-              <div className="animate-ui-pop max-w-sm p-3.5 bg-white rounded-xl border border-gray-200 shadow-md space-y-2 text-xs">
-                <div className="flex items-center justify-between pb-1.5 border-b border-gray-100">
+              <div className="animate-ui-pop max-w-sm p-3.5 bg-white rounded-xl border border-gray-300 shadow-md space-y-2 text-xs">
+                <div className="flex items-center justify-between pb-1.5 border-b border-gray-300">
                   <div className="flex items-center gap-2 font-bold text-gray-900">
                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
                     <span>Live Toast Status</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-gray-400">Baru saja</span>
-                    <button onClick={() => setShowCornerToast(false)} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+                    <span className="text-[11px] text-gray-500">Baru saja</span>
+                    <button onClick={() => setShowCornerToast(false)} className="text-gray-500 hover:text-gray-800 cursor-pointer">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -1512,10 +1606,10 @@ export const FeedbackUiKit: React.FC<FeedbackUiKitProps> = ({ activeSubJump }) =
           <UiDocSection
             id="bt-custom"
             title="Custom content"
-            classesHint="p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs space-y-2.5"
+            classesHint="p-3.5 bg-white rounded-xl border border-gray-300 shadow-xs space-y-2.5"
             codeSnippet={`<div className="p-3.5 bg-white rounded-xl border space-y-2">\n  <div className="font-semibold">Konfirmasi penghapusan tugas?</div>\n  <div className="flex gap-2"><button>Ambil Tindakan</button><button>Tutup</button></div>\n</div>`}
           >
-            <div className="max-w-sm p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs space-y-2.5 text-xs">
+            <div className="max-w-sm p-3.5 bg-white rounded-xl border border-gray-300 shadow-xs space-y-2.5 text-xs">
               <div className="font-semibold text-gray-900">Custom Content: Konfirmasi penghapusan tugas?</div>
               <div className="flex gap-2">
                 <button

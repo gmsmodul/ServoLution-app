@@ -251,10 +251,28 @@ export interface MessageThread {
   messages: ChatMessage[];
 }
 
+export type ReportMenuKey =
+  | 'all_menus'
+  | 'overview'
+  | 'materials'
+  | 'prep'
+  | 'attendance'
+  | 'exams'
+  | 'assignments'
+  | 'livequiz'
+  | 'schedule'
+  | 'students'
+  | 'trainers';
+
+export type ReportExportFormat = 'excel' | 'json' | 'csv' | 'pdf';
+
 export interface ReportItem {
   id: string;
   title: string;
   category: 'Academic' | 'Attendance' | 'Assessments' | 'Advisory';
+  menuKey?: ReportMenuKey;
+  preferredExport?: ReportExportFormat;
+  notes?: string;
   classCode: string;
   generatedDate: string;
   format: string;

@@ -22,6 +22,7 @@ import {
   getRemainingScheduleLabel,
 } from '../../utils/assignmentSchedule';
 import { LiveQuizJoinAccordion } from '../livequiz/LiveQuizJoinAccordion';
+import { InfoPopover } from '../ui/InfoPopover';
 
 export const OverviewPage: React.FC = () => {
   const {
@@ -155,16 +156,81 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
-      {/* Top Greeting Header (Tablet & PC; Mobile displays profile greeting in Header) */}
-      <div className="hidden md:flex items-center justify-between gap-4 pb-6 border-b border-gray-200">
-        <div>
-          <span className="block text-xs font-medium text-gray-600">
-            Welcome
-          </span>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mt-0.5">
-            Rasengan
-          </h1>
-        </div>
+      {/* Unified 4-Column Metric Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.08] border border-black/[0.12] rounded-2xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setActivePage('attendance')}
+          className="p-4 sm:p-5 text-left bg-[#E6F9F0] hover:bg-[#DCF4E9] transition-colors cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-xs font-semibold text-[#146C43]">
+            <span>Daily Attendance</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          </div>
+          <div className="kpi-value text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#0F5132] transition-colors">
+            95.8%
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#35684E]">
+            <span>83 / 87 Present</span>
+            <span className="font-semibold text-emerald-700">+1.4%</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActivePage('exams')}
+          className="p-4 sm:p-5 text-left bg-[#F0EFFC] hover:bg-[#E6E4FA] transition-colors cursor-pointer group border-l border-black/[0.08] sm:border-l-0"
+        >
+          <div className="flex items-center justify-between text-xs font-semibold text-[#3F3B99]">
+            <span>Upcoming Exams</span>
+            <FileCheck className="w-4 h-4 text-[#6C5DD3] shrink-0" />
+          </div>
+          <div className="kpi-value text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#3F3B99] transition-colors">
+            {exams.length + scheduleExamCount} Scheduled
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#5854A8]">
+            <span>Next: Math 302</span>
+            <span className="font-semibold text-[#3F3B99]">Feb</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActivePage('assignments')}
+          className="p-4 sm:p-5 text-left bg-[#FFF5E6] hover:bg-[#FFEBD1] transition-colors cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-xs font-semibold text-[#8C5811]">
+            <span>Pending Grading</span>
+            <Bookmark className="w-4 h-4 text-amber-600 shrink-0" />
+          </div>
+          <div className="kpi-value text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#704309] transition-colors">
+            {pendingGradingCount} Items
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#7A592A]">
+            <span>Across {assignments.length} tasks</span>
+            <span className="font-semibold text-amber-700">Review</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActivePage('prep')}
+          className="p-4 sm:p-5 text-left bg-[#FEF1F5] hover:bg-[#FCE6EE] transition-colors cursor-pointer group border-l border-black/[0.08] sm:border-l-0"
+        >
+          <div className="flex items-center justify-between text-xs font-semibold text-[#9D113C]">
+            <span>Lesson Readiness</span>
+            <BookOpen className="w-4 h-4 text-[#ee2e65] shrink-0" />
+          </div>
+          <div className="kpi-value text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#9D113C] transition-colors">
+            {avgReadiness}%
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#7D3A51]">
+            <span>
+              {lessonPlans.filter((p) => p.status === 'Ready').length}/{lessonPlans.length} Ready
+            </span>
+            <span className="font-semibold text-emerald-700">On Track</span>
+          </div>
+        </button>
       </div>
 
       {/* Quick LiveQuiz Join Accordion for Students & Servolution Crew */}
@@ -185,86 +251,9 @@ export const OverviewPage: React.FC = () => {
         errorMessage={joinError}
       />
 
-      {/* Unified 4-Column Metric Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.06] border border-black/[0.06] rounded-2xl overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setActivePage('attendance')}
-          className="p-4 sm:p-5 text-left bg-[#E6F9F0] hover:bg-[#DCF4E9] transition-colors cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-xs font-semibold text-[#146C43]">
-            <span>Daily Attendance</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          </div>
-          <div className="text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#0F5132] transition-colors">
-            95.8%
-          </div>
-          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#35684E]">
-            <span>83 / 87 Present</span>
-            <span className="font-semibold text-emerald-700">+1.4%</span>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActivePage('exams')}
-          className="p-4 sm:p-5 text-left bg-[#F0EFFC] hover:bg-[#E6E4FA] transition-colors cursor-pointer group border-l border-black/[0.06] sm:border-l-0"
-        >
-          <div className="flex items-center justify-between text-xs font-semibold text-[#3F3B99]">
-            <span>Upcoming Exams</span>
-            <FileCheck className="w-4 h-4 text-[#6C5DD3] shrink-0" />
-          </div>
-          <div className="text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#3F3B99] transition-colors">
-            {exams.length + scheduleExamCount} Scheduled
-          </div>
-          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#5854A8]">
-            <span>Next: Math 302</span>
-            <span className="font-semibold text-[#3F3B99]">Feb</span>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActivePage('assignments')}
-          className="p-4 sm:p-5 text-left bg-[#FFF5E6] hover:bg-[#FFEBD1] transition-colors cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-xs font-semibold text-[#8C5811]">
-            <span>Pending Grading</span>
-            <Bookmark className="w-4 h-4 text-amber-600 shrink-0" />
-          </div>
-          <div className="text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#704309] transition-colors">
-            {pendingGradingCount} Items
-          </div>
-          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#7A592A]">
-            <span>Across {assignments.length} tasks</span>
-            <span className="font-semibold text-amber-700">Review</span>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActivePage('prep')}
-          className="p-4 sm:p-5 text-left bg-[#FEF1F5] hover:bg-[#FCE6EE] transition-colors cursor-pointer group border-l border-black/[0.06] sm:border-l-0"
-        >
-          <div className="flex items-center justify-between text-xs font-semibold text-[#9D113C]">
-            <span>Lesson Readiness</span>
-            <BookOpen className="w-4 h-4 text-[#ee2e65] shrink-0" />
-          </div>
-          <div className="text-2xl sm:text-[28px] font-bold text-[#1C1D21] mt-2 tabular-nums group-hover:text-[#9D113C] transition-colors">
-            {avgReadiness}%
-          </div>
-          <div className="flex items-center justify-between mt-1.5 text-[11.5px] text-[#7D3A51]">
-            <span>
-              {lessonPlans.filter((p) => p.status === 'Ready').length}/{lessonPlans.length} Ready
-            </span>
-            <span className="font-semibold text-emerald-700">On Track</span>
-          </div>
-        </button>
-      </div>
-
       {/* Active Assignments (Autostart on Start Date & Auto-hide on End Date) */}
-      <section className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-black/[0.06] bg-[#FAFBFD] flex items-center justify-between gap-2">
+      <section className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-black/[0.08] bg-[#FAFBFD] flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <span className="w-7 h-7 rounded-full bg-[#FEF1F5] text-[#9D113C] flex items-center justify-center shrink-0">
               <Bookmark className="w-3.5 h-3.5" />
@@ -450,9 +439,12 @@ export const OverviewPage: React.FC = () => {
           {/* Weekly Attendance & Submission Chart */}
           <section className="pt-2">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
-              <div>
+              <div className="flex items-center gap-2">
                 <h3 className="text-[15.5px] font-semibold text-[#1C1D21]">Weekly attendance and submissions</h3>
-                <p className="text-[12px] text-[#8A8D98]">Comparison across active classes (Mon – Fri)</p>
+                <InfoPopover
+                  label="Informasi Weekly attendance and submissions"
+                  content="Comparison across active classes (Mon – Fri)"
+                />
               </div>
               <div className="flex items-center gap-4 text-[11.5px] font-medium text-[#5A5D67]">
                 <span className="flex items-center gap-1.5">

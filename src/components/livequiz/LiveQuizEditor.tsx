@@ -237,7 +237,7 @@ export const LiveQuizEditor: React.FC<LiveQuizEditorProps> = ({
   return (
     <div className="space-y-5">
       {/* Editor Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-black/[0.08]">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -282,7 +282,7 @@ export const LiveQuizEditor: React.FC<LiveQuizEditorProps> = ({
         {/* Left 4 Cols: Metadata + Question Outline */}
         <div className="lg:col-span-4 space-y-4">
           {/* Quiz Metadata */}
-          <div className="bg-white rounded-2xl border border-black/[0.07] p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-black/[0.12] p-4 space-y-3">
             <div className="text-[11px] font-bold uppercase tracking-wider text-[#8A8D98]">
               Informasi Kuis
             </div>
@@ -356,7 +356,7 @@ export const LiveQuizEditor: React.FC<LiveQuizEditorProps> = ({
           </div>
 
           {/* Question List */}
-          <div className="bg-white rounded-2xl border border-black/[0.07] p-4 space-y-3">
+          <div className="bg-white rounded-2xl border border-black/[0.12] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A8D98]">
                 Daftar Pertanyaan ({questions.length})
@@ -468,9 +468,9 @@ export const LiveQuizEditor: React.FC<LiveQuizEditorProps> = ({
 
         {/* Right 8 Cols: Active Question Canvas */}
         {activeQuestion && (
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6 space-y-5">
+          <div className="lg:col-span-8 bg-white rounded-2xl border border-black/[0.12] p-5 sm:p-6 space-y-5">
             {/* Top Settings Row */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-black/[0.06]">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-black/[0.08]">
               <div className="flex items-center gap-1 bg-[#F4F5F8] p-1 rounded-xl">
                 {(
                   [

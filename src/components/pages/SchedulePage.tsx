@@ -21,6 +21,7 @@ import {
 } from '../../constants/buttonStyles';
 import { ScheduleItem } from '../../types';
 import { CustomSelect } from '../ui/CustomSelect';
+import { InfoPopover } from '../ui/InfoPopover';
 
 const MONTH_NAMES = [
   'January',
@@ -204,7 +205,7 @@ export const SchedulePage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-7 items-start">
         {/* Left Column: Compact Calendar + QR Summary */}
         <div className="md:col-span-5 lg:col-span-4 space-y-5">
-          <div className="bg-white rounded-2xl p-5 border border-black/[0.07]">
+          <div className="bg-white rounded-2xl p-5 border border-black/[0.12]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <button
@@ -277,7 +278,7 @@ export const SchedulePage: React.FC = () => {
           </div>
 
           {/* Compact Session & QR Check-in Summary */}
-          <div className="rounded-2xl border border-black/[0.06] divide-y divide-black/[0.06] overflow-hidden bg-white">
+          <div className="rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden bg-white">
             <div className="p-4 bg-[#FAFBFD] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-white border border-black/[0.06] flex items-center justify-center text-[#ee2e65]">
@@ -317,21 +318,22 @@ export const SchedulePage: React.FC = () => {
         </div>
 
         {/* Right Column: Schedule List for Selected Date */}
-        <div className="md:col-span-7 lg:col-span-8 bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
-          <div className="px-5 py-4 border-b border-black/[0.06] bg-[#FAFBFD] flex flex-wrap items-center justify-between gap-2">
-            <div>
+        <div className="md:col-span-7 lg:col-span-8 bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
+          <div className="px-5 py-4 border-b border-black/[0.08] bg-[#FAFBFD] flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <h2 className="text-[15.5px] font-semibold text-[#1C1D21]">{selectedDateLabel}</h2>
-              <p className="text-[12px] text-[#6E717A]">
-                Atur batas keterlambatan dari jam mulai kelas, lalu klik <span className="font-semibold text-[#1C1D21]">Kode QR</span> untuk membuka layar QR di tab baru
-              </p>
+              <InfoPopover
+                label="Informasi jadwal dan Kode QR"
+                content="Atur batas keterlambatan dari jam mulai kelas, lalu klik Kode QR untuk membuka layar QR di tab baru."
+              />
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-black/[0.08] text-[12px] font-semibold text-[#1C1D21] tabular-nums">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-black/[0.1] text-[12px] font-semibold text-[#1C1D21] tabular-nums">
               <Clock className="w-3.5 h-3.5 text-[#ee2e65]" />
               <span>{filteredSchedules.length} Sesi</span>
             </span>
           </div>
 
-          <div className="divide-y divide-black/[0.06]">
+          <div className="divide-y divide-black/[0.08]">
             {filteredSchedules.map((item) => {
               const theme = PASTEL_THEMES[item.theme] || PASTEL_THEMES.periwinkle;
               const toleranceMin = item.lateToleranceMin ?? 5;

@@ -48,7 +48,7 @@ export const LiveQuizJoinAccordion: React.FC<LiveQuizJoinAccordionProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-black/[0.07] bg-white">
+    <div className="rounded-2xl border border-black/[0.12] bg-white">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -62,7 +62,7 @@ export const LiveQuizJoinAccordion: React.FC<LiveQuizJoinAccordionProps> = ({
           <span>Gabung Sesi dengan Kode Ruangan</span>
         </span>
         <ChevronRight
-          className={`w-4 h-4 text-[#6E717A] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] shrink-0 ${
+          className={`w-4 h-4 text-[#6E717A] transition-transform duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] shrink-0 ${
             isOpen ? 'rotate-90 text-[#ee2e65]' : ''
           }`}
         />
@@ -76,8 +76,8 @@ export const LiveQuizJoinAccordion: React.FC<LiveQuizJoinAccordionProps> = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{
-              height: { duration: 0.36, ease: [0.22, 1, 0.36, 1] },
-              opacity: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+              height: { duration: 0.24, ease: [0.23, 1, 0.32, 1] },
+              opacity: { duration: 0.18, ease: [0.23, 1, 0.32, 1] },
             }}
             onAnimationStart={() => setSettled(false)}
             onAnimationComplete={() => {
@@ -91,11 +91,11 @@ export const LiveQuizJoinAccordion: React.FC<LiveQuizJoinAccordionProps> = ({
             }}
           >
             <motion.div
-              initial={{ y: -10 }}
+              initial={{ y: -8 }}
               animate={{ y: 0 }}
-              exit={{ y: -8 }}
-              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-              className="border-t border-black/[0.06] rounded-b-2xl"
+              exit={{ y: -6 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              className="border-t border-black/[0.08] rounded-b-2xl"
             >
               <LiveQuizJoinCard
                 embedded

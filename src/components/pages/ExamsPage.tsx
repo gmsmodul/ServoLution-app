@@ -545,7 +545,7 @@ export const ExamsPage: React.FC = () => {
         className="space-y-6"
       >
         {/* Card 1: Identitas Ujian & Pemilihan Posisi */}
-        <div className="bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6 space-y-5">
+        <div className="bg-white rounded-2xl border border-black/[0.12] p-5 sm:p-6 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-black/[0.06]">
             <h2 className="text-[16px] font-semibold text-[#1C1D21]">
               Formulir Penilaian Ujian
@@ -669,8 +669,8 @@ export const ExamsPage: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden"
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden"
             >
               <div className="px-5 sm:px-6 py-4 bg-[#FAFBFD] border-b border-black/[0.06] flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">
@@ -840,8 +840,8 @@ export const ExamsPage: React.FC = () => {
         </AnimatePresence>
 
         {/* Card 3: Ringkasan Hasil Penilaian (Below Formulir Penilaian) */}
-        <div className="bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between gap-2 pb-3 border-b border-black/[0.06]">
+        <div className="bg-white rounded-2xl border border-black/[0.12] p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-black/[0.08]">
             <div className="flex items-center gap-2">
               <Award className="w-4 h-4 text-[#ee2e65] shrink-0" />
               <h3 className="text-[15.5px] font-semibold text-[#1C1D21]">
@@ -858,12 +858,12 @@ export const ExamsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
             {/* Numeric Score Readout */}
-            <div className="md:col-span-5 p-4 rounded-xl bg-[#FAFBFD] border border-black/[0.06] flex items-center justify-between gap-3">
+            <div className="md:col-span-5 p-4 rounded-xl bg-[#FAFBFD] border border-black/[0.08] flex items-center justify-between gap-3">
               <div>
                 <div className="text-[11.5px] font-medium text-[#6E717A]">
                   Nilai Akhir Terbobot
                 </div>
-                <div className="text-[32px] font-bold text-[#1C1D21] leading-tight mt-0.5 tabular-nums">
+                <div className="kpi-value text-[32px] font-bold text-[#1C1D21] leading-tight mt-0.5 tabular-nums">
                   {assessmentSummary.scoredParams > 0 ? assessmentSummary.finalScore : '—'}
                   <span className="text-[14px] font-medium text-[#8A8D98] ml-1">
                     / {examGradingRule.scaleMax}
@@ -928,7 +928,7 @@ export const ExamsPage: React.FC = () => {
       </form>
 
       {/* Saved Assessment History (Accordion + Table List) */}
-      <section className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
+      <section className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
         {/* Outer Accordion Header */}
         <div
           role="button"
@@ -952,7 +952,7 @@ export const ExamsPage: React.FC = () => {
             <h2 className="text-[15.5px] font-semibold text-[#1C1D21] truncate">
               Riwayat Penilaian Ujian · {activeBatch.batchName} ({activeBatch.year})
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#FAFBFD] border border-black/[0.08] text-[12px] font-semibold text-[#1C1D21] tabular-nums shrink-0">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FAFBFD] border border-black/[0.1] text-[12px] font-semibold text-[#1C1D21] tabular-nums shrink-0">
               {examAssessments.length}
             </span>
           </div>
@@ -964,26 +964,27 @@ export const ExamsPage: React.FC = () => {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
-              <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-2 border-t border-black/[0.06] space-y-4">
+              <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4 border-t border-black/[0.08] space-y-5">
                 {/* Toolbar Search */}
                 <div className="flex items-center justify-end">
                   <div className="relative w-full sm:w-72">
                     <Search className="w-4 h-4 text-[#8A8D98] absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
+                      enterKeyHint="search"
                       value={historySearch}
                       onChange={(e) => setHistorySearch(e.target.value)}
                       placeholder="Cari nama, posisi, atau subject..."
-                      className="w-full h-9 pl-9 pr-4 rounded-full border border-black/[0.09] text-[12.5px] bg-white outline-none focus:border-[#ee2e65]"
+                      className="w-full h-9 pl-9 pr-4 rounded-full border border-black/[0.12] text-[12.5px] bg-white outline-none focus:border-[#ee2e65]"
                     />
                   </div>
                 </div>
 
                 {filteredAssessments.length === 0 ? (
-                  <div className="py-10 px-4 text-center space-y-2 rounded-2xl border border-black/[0.06] bg-[#FAFBFD]">
+                  <div className="py-10 px-4 text-center space-y-2 rounded-2xl border border-black/[0.08] bg-[#FAFBFD]">
                     <UserCheck className="w-8 h-8 text-[#B4B6C1] mx-auto" />
                     <div className="text-[14px] font-semibold text-[#1C1D21]">
                       {examAssessments.length === 0
@@ -992,8 +993,114 @@ export const ExamsPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white">
-                    <div className="overflow-x-auto">
+                  <div className="rounded-2xl border border-black/[0.12] overflow-hidden bg-white">
+                    {/* Mobile Card Stack (< 640px) */}
+                    <div className="sm:hidden divide-y divide-black/[0.07]">
+                      {filteredAssessments.map((item) => {
+                        const isExpanded = expandedAssessmentId === item.id;
+                        return (
+                          <div key={item.id} className="p-4 space-y-2.5">
+                            <div
+                              onClick={() => setExpandedAssessmentId(isExpanded ? null : item.id)}
+                              className="flex items-start justify-between gap-2 cursor-pointer"
+                            >
+                              <div className="min-w-0">
+                                <div className="text-[13.5px] font-semibold text-[#1C1D21] truncate">
+                                  {item.examineeName}
+                                </div>
+                                <div className="text-[11.5px] text-[#6E717A] truncate">
+                                  {item.subject} · {item.positionName}
+                                </div>
+                                <div className="text-[11px] text-[#8A8D98] tabular-nums mt-0.5">
+                                  {item.examDateLabel}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="text-[14px] font-bold text-[#1C1D21] tabular-nums">
+                                  {item.finalScore} ({item.grade})
+                                </div>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold mt-0.5 ${
+                                    item.passed
+                                      ? 'bg-[#E6F9F0] text-[#146C43]'
+                                      : 'bg-[#FFECEB] text-[#942922]'
+                                  }`}
+                                >
+                                  {item.passed ? 'Lulus' : 'Tidak Lulus'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedAssessmentId(isExpanded ? null : item.id)}
+                                className="text-[12px] font-semibold text-[#ee2e65] inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>{isExpanded ? 'Tutup Detail' : 'Detail Parameter'}</span>
+                                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                              </button>
+                              {confirmDeleteId === item.id ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleDeleteExamAssessment(item.id);
+                                    setConfirmDeleteId(null);
+                                  }}
+                                  className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full bg-[#FFECEB] text-[#942922] text-[11.5px] font-semibold cursor-pointer"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  <span>Hapus?</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteId(item.id)}
+                                  aria-label={`Hapus penilaian ${item.examineeName}`}
+                                  className="w-8 h-8 rounded-full border border-black/[0.1] bg-white hover:bg-[#FFECEB] text-[#6E717A] hover:text-[#942922] inline-flex items-center justify-center cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+
+                            {isExpanded && (
+                              <div className="pt-2 border-t border-black/[0.06] space-y-2">
+                                <div className="grid grid-cols-1 gap-2">
+                                  {item.parameterScores.map((ps) => (
+                                    <div
+                                      key={ps.parameterId}
+                                      className="p-2.5 rounded-xl bg-[#FAFBFD] border border-black/[0.08] flex items-center justify-between gap-2 text-[12px]"
+                                    >
+                                      <span className="font-medium text-[#1C1D21] truncate">{ps.label}</span>
+                                      <span
+                                        className={`font-bold tabular-nums shrink-0 ${
+                                          ps.score >= examGradingRule.passingScore
+                                            ? 'text-[#146C43]'
+                                            : 'text-[#942922]'
+                                        }`}
+                                      >
+                                        {ps.rawValue !== undefined && ps.rawValue !== ps.score
+                                          ? `${ps.rawValue} (${ps.score})`
+                                          : ps.score}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                {item.notes && (
+                                  <div className="text-[12px] text-[#5A5D67] bg-[#FAFBFD] p-2.5 rounded-xl border border-black/[0.06]">
+                                    <strong className="text-[#1C1D21]">Catatan: </strong>
+                                    {item.notes}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="hidden sm:block overflow-x-auto">
                       <table className="w-full text-left border-collapse min-w-[740px]">
                         <thead>
                           <tr className="bg-[#FAFBFD] border-b border-black/[0.06] text-[11.5px] font-medium text-[#6E717A]">

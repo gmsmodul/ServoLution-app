@@ -46,13 +46,13 @@ export const AddExamModal: React.FC = () => {
         ref={setSheetElement}
         {...sheetGestureProps}
         onSubmit={onSubmit}
-        className="w-full sm:max-w-md bg-white rounded-t-[28px] sm:rounded-[26px] p-6 space-y-4 shadow-2xl animate-bottom-sheet"
+        className="w-full sm:max-w-md bg-white rounded-t-[28px] sm:rounded-[26px] border border-black/[0.12] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 space-y-4 shadow-2xl animate-bottom-sheet"
       >
         <div
           data-sheet-handle="true"
           className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
         >
-          <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
         </div>
         <div className="flex items-center justify-between">
           <h3 className="text-[17px] font-semibold text-[#1C1D21]">Schedule New Exam</h3>

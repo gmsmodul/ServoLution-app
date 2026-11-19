@@ -22,7 +22,10 @@ import {
   BellRing,
   X,
   RotateCcw,
+  WifiOff,
+  RefreshCw,
 } from 'lucide-react';
+import { playUiMotionSound } from '../../utils/uiMotionSound';
 import { AnimatePresence, motion } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { PASTEL_THEMES } from '../../constants/theme';
@@ -101,6 +104,9 @@ export const Header: React.FC = () => {
     setSelectedMaterial,
     setSelectedStudentDrawer,
     setSelectedTrainerDrawer,
+    isOnline,
+    pendingSyncCount,
+    syncPendingNow,
   } = useApp();
 
   const isMobile = useIsMobile();
@@ -479,7 +485,7 @@ export const Header: React.FC = () => {
   ];
 
   return (
-    <header className="relative z-30 h-16 px-4 sm:px-7 border-b border-black/[0.05] flex items-center justify-between gap-3 sm:gap-4 shrink-0 bg-white/80 backdrop-blur-sm">
+    <header className="relative z-30 h-16 px-4 sm:px-7 border-b border-black/[0.12] flex items-center justify-between gap-3 sm:gap-4 shrink-0 bg-white/80 backdrop-blur-sm no-print">
       <div className="relative flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
         {/* Mobile Header Left: Profile on Overview, Page Title on other pages */}
         <div className="flex md:hidden items-center min-w-0 flex-1 relative">
@@ -490,7 +496,7 @@ export const Header: React.FC = () => {
                 initial={{ opacity: 0, x: direction * 14 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: direction * -12 }}
-                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                 className="flex items-center gap-2.5 min-w-0 w-full"
               >
                 <img
@@ -516,7 +522,7 @@ export const Header: React.FC = () => {
                 initial={{ opacity: 0, x: direction * 14 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: direction * -12 }}
-                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                 className="flex items-center gap-2 min-w-0 w-full"
               >
                 <CurrentPageIcon className={`w-[18px] h-[18px] shrink-0 ${currentMeta.iconClass || 'text-[#1C1D21]'}`} />
@@ -530,8 +536,8 @@ export const Header: React.FC = () => {
 
         {/* Tablet & PC Breadcrumbs */}
         <nav className="hidden md:flex items-center gap-2 text-[13px] min-w-0">
-          <span className="text-[#9496A1] font-medium shrink-0">Servolution</span>
-          <ChevronRight className="w-3.5 h-3.5 text-[#B4B6C1] shrink-0" />
+          <span className="text-[#646772] font-medium shrink-0">Servolution</span>
+          <ChevronRight className="w-3.5 h-3.5 text-[#8A8D98] shrink-0" />
           <div className="relative flex items-center min-w-0 overflow-hidden py-0.5">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
@@ -539,7 +545,7 @@ export const Header: React.FC = () => {
                 initial={{ opacity: 0, y: direction * 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: direction * -8 }}
-                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
                 className="flex items-center gap-1.5 font-semibold text-[#1C1D21] min-w-0"
               >
                 <CurrentPageIcon className={`w-4 h-4 shrink-0 ${currentMeta.iconClass || 'text-[#1C1D21]'}`} />
@@ -552,25 +558,54 @@ export const Header: React.FC = () => {
 
       {/* Top Right Icons */}
       <div className="flex items-center gap-2 sm:gap-2.5 relative shrink-0">
+        {(!isOnline || pendingSyncCount > 0) && (
+          <button
+            type="button"
+            onClick={() => void syncPendingNow()}
+            title={
+              !isOnline
+                ? 'Mode offline — mutasi otomatis antre untuk disinkronkan'
+                : `${pendingSyncCount} mutasi menunggu sinkronisasi — klik untuk kirim`
+            }
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full border text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-colors ${
+              !isOnline
+                ? 'bg-amber-50 border-amber-300 text-amber-800'
+                : 'bg-[#F0EFFC] border-[#D6D4FF] text-[#3F3B99] hover:bg-[#E4E1FD]'
+            }`}
+          >
+            {!isOnline ? (
+              <WifiOff className="w-3.5 h-3.5 shrink-0" />
+            ) : (
+              <RefreshCw className="w-3.5 h-3.5 shrink-0" />
+            )}
+            <span className="hidden sm:inline">
+              {!isOnline ? 'Offline' : `Sync (${pendingSyncCount})`}
+            </span>
+          </button>
+        )}
+
         {/* Notifications Button & Popover */}
         <div ref={notifWrapperRef} className="relative">
           <button
             type="button"
             onClick={() => {
               setIsGlobalSearchOpen(false);
-              setNotificationsOpen(!notificationsOpen);
+              setNotificationsOpen((prev) => {
+                playUiMotionSound(!prev ? 'pop' : 'tick');
+                return !prev;
+              });
             }}
             aria-label="Notifications"
             aria-expanded={notificationsOpen}
             className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors relative cursor-pointer ${
               notificationsOpen
                 ? 'bg-[#FEF1F5] text-[#9D113C] border-[#FBC2D4]'
-                : 'border-black/[0.07] text-[#1C1D21] hover:bg-[#F4F5F8]'
+                : 'border-black/[0.14] text-[#1C1D21] hover:bg-[#F4F5F8]'
             }`}
           >
             <Bell className="w-4 h-4" />
             {unreadNotifCount > 0 && (
-              <span className="min-w-[17px] h-[17px] px-1 rounded-full bg-[#EF4444] text-white text-[10px] font-bold flex items-center justify-center absolute -top-1 -right-1 ring-2 ring-white">
+              <span className="min-w-[17px] h-[17px] px-1 rounded-full bg-[#EF4444] text-white text-[10px] font-bold flex items-center justify-center absolute -top-1 -right-1 ring-2 ring-white tabular-nums">
                 {unreadNotifCount}
               </span>
             )}
@@ -587,7 +622,7 @@ export const Header: React.FC = () => {
                   right: popoverCoords.isSm ? popoverCoords.right : 12,
                   left: popoverCoords.isSm ? undefined : 12,
                 }}
-                className="fixed sm:w-[400px] bg-white rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.22)] border border-black/[0.08] p-4 z-[9999] space-y-3 animate-ui-pop"
+                className="fixed sm:w-[400px] bg-white rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.22)] border border-black/[0.14] p-4 z-[9999] space-y-3 animate-ui-pop"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -704,7 +739,10 @@ export const Header: React.FC = () => {
             type="button"
             onClick={() => {
               setNotificationsOpen(false);
-              setIsGlobalSearchOpen((prev) => !prev);
+              setIsGlobalSearchOpen((prev) => {
+                playUiMotionSound(!prev ? 'pop' : 'tick');
+                return !prev;
+              });
             }}
             aria-label="Search aplikasi"
             aria-expanded={isGlobalSearchOpen}
@@ -712,7 +750,7 @@ export const Header: React.FC = () => {
             className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors relative cursor-pointer ${
               isGlobalSearchOpen
                 ? 'bg-[#FEF1F5] text-[#9D113C] border-[#FBC2D4]'
-                : 'border-black/[0.07] text-[#1C1D21] hover:bg-[#F4F5F8]'
+                : 'border-black/[0.14] text-[#1C1D21] hover:bg-[#F4F5F8]'
             }`}
           >
             <Search className="w-4 h-4 shrink-0" />
@@ -728,13 +766,13 @@ export const Header: React.FC = () => {
                   right: searchCoords.isSm ? searchCoords.right : 12,
                   left: searchCoords.isSm ? undefined : 12,
                 }}
-                className="fixed sm:w-[400px] bg-white rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.22)] border border-black/[0.08] p-4 z-[9999] space-y-3 animate-ui-pop"
+                className="fixed sm:w-[400px] bg-white rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.22)] border border-black/[0.14] p-4 z-[9999] space-y-3 animate-ui-pop"
               >
                 {/* Popover Header */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-[15px] font-semibold text-[#1C1D21]">Search</span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#F0EFFC] text-[#3F3B99] text-[10.5px] font-bold shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-[#F0EFFC] text-[#3F3B99] text-[10.5px] font-bold shrink-0 tabular-nums">
                       {filteredSearchEntries.length} Results
                     </span>
                   </div>
@@ -760,15 +798,16 @@ export const Header: React.FC = () => {
                 </div>
 
                 {/* Inline Search Input */}
-                <div className="flex items-center gap-2 bg-[#F4F5F8] rounded-xl px-3 py-2 border border-black/[0.05] focus-within:bg-white focus-within:border-[#ee2e65] transition-colors">
-                  <Search className="w-3.5 h-3.5 text-[#8A8D98] shrink-0" />
+                <div className="flex items-center gap-2 bg-[#F4F5F8] rounded-xl px-3 py-2 border border-black/[0.12] focus-within:bg-white focus-within:border-[#ee2e65] transition-colors">
+                  <Search className="w-3.5 h-3.5 text-[#646772] shrink-0" />
                   <input
                     ref={searchInputRef}
                     type="text"
+                    enterKeyHint="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari modul, tugas, jadwal, siswa, trainer..."
-                    className="flex-1 bg-transparent text-xs text-[#1C1D21] placeholder:text-[#8A8D98] outline-none min-w-0"
+                    className="flex-1 bg-transparent text-xs text-[#1C1D21] placeholder:text-[#646772] outline-none min-w-0"
                   />
                   {searchQuery && (
                     <button

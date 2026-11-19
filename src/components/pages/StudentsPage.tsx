@@ -111,10 +111,11 @@ export const StudentsPage: React.FC = () => {
             <Search className="w-4 h-4 text-[#8A8D98] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              enterKeyHint="search"
               value={studentSearchQuery}
               onChange={(e) => setStudentSearchQuery(e.target.value)}
               placeholder="Search student or email..."
-              className="w-full sm:w-auto h-9 pl-9 pr-4 rounded-full border border-black/[0.09] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
+              className="w-full sm:w-auto h-9 pl-9 pr-4 rounded-full border border-black/[0.12] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
             />
           </div>
           <button
@@ -164,7 +165,7 @@ export const StudentsPage: React.FC = () => {
       </div>
 
       {filteredStudents.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-black/[0.07] py-12 px-6 text-center space-y-2">
+        <div className="bg-white rounded-2xl border border-black/[0.12] py-12 px-6 text-center space-y-2">
           <div className="text-[15px] font-semibold text-[#1C1D21]">No students found</div>
           <p className="text-[12.5px] text-[#8A8D98]">
             Try adjusting your search query, class selection, or status filter.
@@ -173,7 +174,7 @@ export const StudentsPage: React.FC = () => {
       ) : (
         <>
           {/* Mobile Unified Hairline List */}
-          <div className="md:hidden bg-white rounded-2xl border border-black/[0.07] divide-y divide-black/[0.06] overflow-hidden">
+          <div className="md:hidden bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden">
             {filteredStudents.map((st) => {
               const statusBadge =
                 st.status === 'Honor Roll'
@@ -224,11 +225,11 @@ export const StudentsPage: React.FC = () => {
           </div>
 
           {/* Tablet & PC Table List */}
-          <div className="hidden md:block overflow-hidden rounded-2xl border border-black/[0.07] bg-white">
+          <div className="hidden md:block overflow-hidden rounded-2xl border border-black/[0.12] bg-white">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#FAFBFD] border-b border-black/[0.05] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+                  <tr className="bg-[#FAFBFD] border-b border-black/[0.08] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
                     <th className="py-3.5 px-5">Student</th>
                     <th className="py-3.5 px-4">Class</th>
                     <th className="py-3.5 px-4">Attendance</th>
@@ -238,7 +239,7 @@ export const StudentsPage: React.FC = () => {
                     <th className="py-3.5 px-5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.05] text-[13px]">
+                <tbody className="divide-y divide-black/[0.08] text-[13px]">
                   {filteredStudents.map((st) => {
                     const statusBadge =
                       st.status === 'Honor Roll'

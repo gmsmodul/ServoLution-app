@@ -199,13 +199,13 @@ export const TrainerFeedbackModal: React.FC = () => {
         ref={setSheetElement}
         {...sheetGestureProps}
         onSubmit={handleSubmit}
-        className="w-full sm:max-w-2xl bg-white rounded-t-[28px] sm:rounded-[26px] p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto animate-bottom-sheet"
+        className="w-full sm:max-w-2xl bg-white rounded-t-[28px] sm:rounded-[26px] border border-black/[0.12] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto animate-bottom-sheet"
       >
         <div
           data-sheet-handle="true"
           className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
         >
-          <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
         </div>
 
         {/* Modal Header */}
@@ -307,7 +307,7 @@ export const TrainerFeedbackModal: React.FC = () => {
         </div>
 
         {/* Tab Parameter Penilaian yang Dipilih */}
-        <div className="rounded-2xl border border-black/[0.08] bg-[#FAFBFD] p-4 space-y-3.5">
+        <div className="rounded-2xl border border-black/[0.12] bg-[#FAFBFD] p-4 space-y-3.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="text-[12.5px] font-semibold text-[#1C1D21]">

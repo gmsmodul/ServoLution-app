@@ -21,10 +21,16 @@ import {
   CheckCircle2,
   Sparkles,
   FileText,
+  Palette,
+  FormInput,
+  Table2,
+  Smartphone,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { UiDocPage, UiDocSection } from './UiDocBlock';
 import { MobileNavUiKitDemo } from './MobileNavUiKitDemo';
+import { Mobile375FixesUiKit } from './Mobile375FixesUiKit';
 import { SplitFilterButton } from '../ui/SplitFilterButton';
 import { HorizontalSlideTrack } from '../ui/HorizontalSlideTrack';
 import { ElasticPullToRefresh } from '../ui/ElasticPullToRefresh';
@@ -39,12 +45,15 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
   const { triggerToast } = useApp();
 
   // 1. Mobile Header Demo State
-  const [headerMode, setHeaderMode] = useState<'overview' | 'materials' | 'students' | 'messages'>('overview');
+  const [headerMode, setHeaderMode] = useState<'utilities' | 'dataentry' | 'datadisplay' | 'tables'>('utilities');
 
   // 3. Mobile Split Filter Demo State
   const [demoClass, setDemoClass] = useState('All');
   const [demoStatus, setDemoStatus] = useState('All');
   const [demoType, setDemoType] = useState('All');
+
+  // 4. Mobile Hairline List Preview State
+  const [hairlineMode, setHairlineMode] = useState<'mobile' | 'desktop'>('mobile');
 
   // 5. Mobile Bottom Sheet Demo State
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -55,6 +64,9 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
   // 6. Mobile Gestures & Slide Demo State
   const [ptrDemoSeq, setPtrDemoSeq] = useState(0);
   const [slideMonth, setSlideMonth] = useState('Feb');
+  const [transitionTab, setTransitionTab] = useState(0);
+  const [transitionDir, setTransitionDir] = useState<1 | -1>(1);
+  const [depthPullDemo, setDepthPullDemo] = useState(false);
 
   // 7. Mobile Notification Popover Demo State
   const [notifTab, setNotifTab] = useState<'All' | 'Unread'>('All');
@@ -86,10 +98,10 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
   ]);
 
   const headerPageMeta = {
-    overview: { title: 'Overview', icon: BookOpen },
-    materials: { title: 'Class Materials', icon: Library },
-    students: { title: 'Students', icon: Users },
-    messages: { title: 'Messages', icon: MessageSquare },
+    utilities: { title: 'Grid', category: '1. Utilities', icon: Palette },
+    dataentry: { title: 'Buttons', category: '3. Data Entry', icon: FormInput },
+    datadisplay: { title: 'Accordion', category: '2. Data Display', icon: Layers },
+    tables: { title: 'Data Tables', category: '5. Tables', icon: Table2 },
   };
   const ActiveHeaderIcon = headerPageMeta[headerMode].icon;
 
@@ -100,130 +112,101 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
     <div className="space-y-8">
       {/* 1. Mobile Header */}
       {activeSubJump === 'Mobile Header' && (
-        <UiDocPage
+          <UiDocPage
           title="Mobile Header"
-          description="Header responsif khusus mobile tanpa breadcrumb: menampilkan foto profil + nama pada Overview dan judul halaman pada halaman lainnya."
+          description="Header responsif khusus UI KIT tanpa breadcrumb di mobile: menampilkan ikon kategori + nama komponen pada layar kecil, serta breadcrumb UI KIT > Kategori > Komponen di desktop."
           subLinks={[
-            { id: 'mhd-overview', label: 'Overview Profile Header' },
-            { id: 'mhd-inner', label: 'Inner Page Title Header' },
-            { id: 'mhd-subbar', label: 'Right-Aligned Sub-Header Bar' },
+            { id: 'mhd-overview', label: 'Category Header vs Inner Breadcrumb' },
+            { id: 'mhd-inner', label: 'Breadcrumb Removal Rule (Mobile vs Tablet/PC)' },
+            { id: 'mhd-subbar', label: 'Right-Aligned Sub-Header Action Bar' },
           ]}
         >
           <UiDocSection
             id="mhd-overview"
-            title="Overview Profile Header vs Inner Page Header"
-            classesHint="h-16 px-4 border-b bg-white/80 / flex md:hidden items-center gap-2.5"
-            codeSnippet={`{activePage === 'overview' ? (\n  <div className="flex md:hidden items-center gap-2.5">\n    <img src={avatar} className="w-9 h-9 rounded-full" />\n    <div>\n      <span className="block text-[11px] text-gray-600">Welcome</span>\n      <span className="block text-[15px] font-semibold">Rasengan</span>\n    </div>\n  </div>\n) : (\n  <div className="flex md:hidden items-center gap-2">\n    <PageIcon className="w-[18px] h-[18px]" />\n    <h1 className="text-[17px] font-semibold truncate">{title}</h1>\n  </div>\n)}`}
+            title="Category Header vs Inner Breadcrumb"
+            classesHint="h-16 px-4 border-b bg-white/80 / flex md:hidden items-center gap-2"
+            codeSnippet={`{/* Mobile Header (< 768px) */}\n<div className="flex md:hidden items-center gap-2 min-w-0">\n  <CategoryIcon className="w-[18px] h-[18px] text-[#ee2e65] shrink-0" />\n  <h1 className="text-[17px] font-semibold truncate">{uiSubJump}</h1>\n</div>\n\n{/* Desktop Header (>= 768px) */}\n<nav className="hidden md:flex items-center gap-2 text-[13px]">\n  <span>UI KIT</span> <ChevronRight /> <span>{category}</span> <ChevronRight /> <span>{uiSubJump}</span>\n</nav>`}
           >
             <div className="space-y-4">
               <div className="flex flex-wrap gap-1.5">
-                {(['overview', 'materials', 'students', 'messages'] as const).map((m) => (
+                {(['utilities', 'dataentry', 'datadisplay', 'tables'] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setHeaderMode(m)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                       headerMode === m
-                        ? 'bg-[#1C1D21] text-white shadow-xs'
-                        : 'bg-[#F4F5F8] text-[#6E717A] hover:text-[#1C1D21]'
+                        ? 'bg-[#ee2e65] text-white shadow-xs'
+                        : 'bg-[#F4F5F8] text-[#5A5D67] hover:text-[#1C1D21]'
                     }`}
                   >
-                    {m === 'overview' ? 'Overview (Profile)' : headerPageMeta[m].title}
+                    {headerPageMeta[m].category}
                   </button>
                 ))}
               </div>
 
               <div className="bg-[#E8EAEE] rounded-2xl p-4 sm:p-6 flex justify-center">
-                <div className="w-full max-w-[375px] bg-white rounded-[24px] shadow-md border border-black/[0.06] overflow-hidden">
+                <div className="w-full max-w-[375px] bg-white rounded-[24px] shadow-md border border-black/[0.12] overflow-hidden">
                   {/* Simulated Mobile Top Header */}
-                  <div className="h-16 px-4 border-b border-black/[0.06] flex items-center justify-between gap-3 bg-white">
-                    {headerMode === 'overview' ? (
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <img
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
-                          alt="Rasengan"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://placehold.co/80x80/1C1D21/FFFFFF?text=RS';
-                          }}
-                          className="w-9 h-9 rounded-full object-cover border border-black/[0.08] shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <span className="block text-[11px] font-medium text-gray-600 leading-tight">
-                            Welcome
-                          </span>
-                          <span className="block text-[15px] font-semibold tracking-tight text-[#1C1D21] truncate leading-tight">
-                            Rasengan
-                          </span>
-                        </div>
+                  <div className="h-16 px-4 border-b border-black/[0.12] flex items-center justify-between gap-3 bg-white">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-[#FEF1F5] text-[#ee2e65] flex items-center justify-center shrink-0">
+                        <ActiveHeaderIcon className="w-4 h-4" />
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2 min-w-0">
-                        <ActiveHeaderIcon className="w-[18px] h-[18px] text-[#1C1D21] shrink-0" />
-                        <span className="text-[17px] font-semibold tracking-tight text-[#1C1D21] truncate">
+                      <div className="min-w-0">
+                        <span className="block text-[10.5px] font-semibold uppercase tracking-wider text-[#646772] leading-tight">
+                          UI KIT · {headerPageMeta[headerMode].category.replace(/^\d+\.\s*/, '')}
+                        </span>
+                        <span className="block text-[16px] font-semibold tracking-tight text-[#1C1D21] truncate leading-tight">
                           {headerPageMeta[headerMode].title}
                         </span>
                       </div>
-                    )}
+                    </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => triggerToast('Notifikasi', 'Membuka panel notifikasi mobile.', 'info')}
-                        className="w-9 h-9 rounded-full border border-black/[0.07] flex items-center justify-center text-[#1C1D21] relative cursor-pointer"
+                        onClick={() => triggerToast('UI KIT Updates', 'Membuka panel pembaruan komponen.', 'info')}
+                        className="w-9 h-9 rounded-full border border-black/[0.14] flex items-center justify-center text-[#1C1D21] relative cursor-pointer"
                       >
                         <Bell className="w-4 h-4" />
-                        <span className="min-w-[16px] h-[16px] px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-bold flex items-center justify-center absolute -top-1 -right-1 ring-2 ring-white">
-                          5
+                        <span className="min-w-[16px] h-[16px] px-1 rounded-full bg-[#EF4444] text-white text-[9.5px] font-bold flex items-center justify-center absolute -top-1 -right-1 ring-2 ring-white tabular-nums">
+                          3
                         </span>
                       </button>
                       <button
                         type="button"
-                        onClick={() => setHeaderMode('messages')}
-                        className="w-9 h-9 rounded-full border border-black/[0.07] flex items-center justify-center text-[#1C1D21] relative cursor-pointer"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        <span className="w-2 h-2 rounded-full bg-[#F59E0B] absolute top-1.5 right-2 ring-2 ring-white" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => triggerToast('UI Kit', 'Menuju UI Design System.', 'info')}
-                        className="w-9 h-9 rounded-full border border-black/[0.07] flex items-center justify-center text-[#1C1D21] cursor-pointer"
+                        onClick={() => triggerToast('Search UI KIT', 'Membuka pencarian cepat komponen.', 'info')}
+                        className="w-9 h-9 rounded-full border border-black/[0.14] flex items-center justify-center text-[#1C1D21] cursor-pointer"
                       >
                         <Search className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
-                  {/* Simulated Body Below Mobile Header (No Duplicate In-Page Title) */}
+                  {/* Simulated Body Below Mobile Header */}
                   <div className="p-4 space-y-3 bg-white">
                     <div className="flex items-center justify-end gap-2">
-                      {headerMode === 'students' && (
-                        <span className="mr-auto px-2.5 py-1 rounded-full bg-[#FFF5E6] text-[#8C5811] text-[11px] font-bold">
-                          Avg 93%
-                        </span>
-                      )}
-                      {headerMode === 'messages' && (
-                        <span className="mr-auto px-2.5 py-1 rounded-full bg-[#FFECEB] text-[#942922] text-[11px] font-bold">
-                          4 Unread
-                        </span>
-                      )}
+                      <span className="mr-auto px-2.5 py-1 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11px] font-bold">
+                        Token v2.4
+                      </span>
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-black/[0.08] text-xs font-medium text-[#1C1D21]"
+                        className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-black/[0.14] text-xs font-medium text-[#1C1D21] whitespace-nowrap shrink-0"
                       >
-                        <BarChart2 className="w-3.5 h-3.5 text-gray-500" />
-                        <span>Statistics</span>
+                        <Download className="w-3.5 h-3.5 text-gray-500" />
+                        <span>PDF</span>
                       </button>
                       <button
                         type="button"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#1C1D21] text-white text-xs font-medium"
+                        className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-[#ee2e65] hover:bg-[#d82256] text-white text-xs font-medium whitespace-nowrap shrink-0"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Create</span>
+                        <span>Copy</span>
                       </button>
                     </div>
-                    <div className="h-14 rounded-2xl bg-[#F4F5F8] border border-black/[0.04] flex items-center justify-center text-[11.5px] text-[#8A8D98]">
-                      Konten halaman dimulai tanpa duplikasi judul
+                    <div className="h-14 rounded-2xl bg-[#F4F5F8] border border-black/[0.10] flex items-center justify-center text-[11.5px] text-[#646772]">
+                      Konten UI KIT tampil bersih tanpa duplikasi judul
                     </div>
                   </div>
                 </div>
@@ -234,20 +217,20 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
           <UiDocSection
             id="mhd-inner"
             title="Breadcrumb Removal Rule (Mobile vs Tablet/PC)"
-            classesHint="flex md:hidden (Title / Profile) | hidden md:flex (Breadcrumb)"
-            codeSnippet={`{/* Mobile: Page Title */}\n<div className="flex md:hidden items-center gap-2 min-w-0">\n  <Icon className="w-[18px] h-[18px]" />\n  <h1 className="text-[17px] font-semibold truncate">{title}</h1>\n</div>\n\n{/* Tablet & PC: Breadcrumb */}\n<nav className="hidden md:flex items-center gap-2 text-[13px]">\n  <span>Servolution</span> <ChevronRight /> <span>{title}</span>\n</nav>`}
+            classesHint="flex md:hidden (Icon + Title) | hidden md:flex (Breadcrumb)"
+            codeSnippet={`{/* Mobile: Category Title */}\n<div className="flex md:hidden items-center gap-2 min-w-0">\n  <Icon className="w-[18px] h-[18px] text-[#ee2e65]" />\n  <h1 className="text-[17px] font-semibold truncate">{uiSubJump}</h1>\n</div>\n\n{/* Tablet & PC: Breadcrumb */}\n<nav className="hidden md:flex items-center gap-2 text-[13px]">\n  <span>UI KIT</span> <ChevronRight /> <span>{category}</span> <ChevronRight /> <span>{uiSubJump}</span>\n</nav>`}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-4 rounded-xl bg-[#FAFBFD] border border-black/[0.05] space-y-1.5">
+              <div className="p-4 rounded-xl bg-[#FAFBFD] border border-black/[0.12] space-y-1.5">
                 <div className="font-semibold text-[#1C1D21]">Mobile (&lt; 768px)</div>
-                <p className="text-[#6E717A] leading-relaxed">
-                  Sidebar &amp; breadcrumb disembunyikan. Header menampilkan judul halaman (atau profil + nama pada Overview), dan judul di dalam halaman otomatis disembunyikan.
+                <p className="text-[#5A5D67] leading-relaxed">
+                  Sidebar &amp; breadcrumb disembunyikan. Header menampilkan ikon kategori + nama komponen aktif secara ringkas untuk menghindari dua baris judul yang sempit.
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-[#FAFBFD] border border-black/[0.05] space-y-1.5">
+              <div className="p-4 rounded-xl bg-[#FAFBFD] border border-black/[0.12] space-y-1.5">
                 <div className="font-semibold text-[#1C1D21]">Tablet &amp; PC (&ge; 768px)</div>
-                <p className="text-[#6E717A] leading-relaxed">
-                  Sidebar kiri aktif, header menampilkan breadcrumb <code className="px-1 py-0.5 rounded bg-gray-100">Servolution &gt; Halaman</code>, dan judul lengkap + subjudul tampil di dalam halaman.
+                <p className="text-[#5A5D67] leading-relaxed">
+                  Sidebar kiri menampilkan seluruh kategori, dan header menampilkan breadcrumb animasi <code className="px-1 py-0.5 rounded bg-gray-100">UI KIT &gt; Kategori &gt; Komponen</code>.
                 </p>
               </div>
             </div>
@@ -257,22 +240,22 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
             id="mhd-subbar"
             title="Right-Aligned Sub-Header Action Bar"
             classesHint="flex items-center justify-end gap-2.5 w-full md:w-auto"
-            codeSnippet={`<div className="flex items-center justify-end gap-2.5 w-full md:w-auto">\n  <button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border">...</button>\n  <button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#1C1D21] text-white">...</button>\n</div>`}
+            codeSnippet={`<div className="flex items-center justify-end gap-2.5 w-full md:w-auto">\n  <button className={ACTION_BTN_SECONDARY}>...</button>\n  <button className={ACTION_BTN_PRIMARY}>...</button>\n</div>`}
           >
-            <div className="max-w-[375px] bg-[#FAFBFD] p-3.5 rounded-2xl border border-black/[0.05]">
+            <div className="max-w-[375px] bg-[#FAFBFD] p-3.5 rounded-2xl border border-black/[0.12]">
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => triggerToast('CSV Export', 'Mengunduh ringkasan CSV.', 'success')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-black/[0.08] bg-white text-xs font-medium text-[#1C1D21] cursor-pointer"
+                  onClick={() => triggerToast('Export Tokens', 'Mengunduh konfigurasi JSON token.', 'success')}
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-black/[0.14] bg-white text-xs font-medium text-[#1C1D21] whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>CSV</span>
+                  <span>JSON</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => triggerToast('Generate', 'Membuat laporan baru.', 'info')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#1C1D21] text-white text-xs font-medium cursor-pointer"
+                  onClick={() => triggerToast('New Token', 'Menambahkan varian token baru.', 'info')}
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-[#ee2e65] hover:bg-[#d82256] text-white text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Generate</span>
@@ -335,7 +318,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                 />
               </div>
 
-              <div className="text-xs text-[#6E717A] bg-[#FAFBFD] px-3.5 py-2.5 rounded-xl border border-black/[0.04]">
+              <div className="text-xs text-[#5A5D67] bg-[#FAFBFD] px-3.5 py-2.5 rounded-xl border border-black/[0.10]">
                 Kelas aktif: <strong className="text-[#1C1D21]">{demoClass}</strong> · Tipe aktif:{' '}
                 <strong className="text-[#1C1D21]">{demoType}</strong> — klik sisi kiri untuk beralih cepat, atau tekan panah untuk memilih dari daftar.
               </div>
@@ -387,7 +370,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                 ]}
               />
 
-              <span className="text-xs text-[#6E717A]">
+              <span className="text-xs text-[#5A5D67]">
                 Status terpilih: <strong className="text-[#9D113C]">{demoStatus}</strong>
               </span>
             </div>
@@ -399,28 +382,28 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
       {activeSubJump === 'Mobile Compact Buttons' && (
         <UiDocPage
           title="Mobile Compact Buttons"
-          description="Standar tombol pada mode mobile: setiap tombol selalu berpasangan Ikon + 1 Kata singkat agar nyaman disentuh satu tangan tanpa membungkus baris."
+          description="Standar tombol & daftar mobile: setiap CTA utama memakai Primary Rose (#ee2e65), ketinggian seragam h-9, Ikon + 1 Kata singkat di layar kecil tanpa membungkus baris, serta daftar garis tipis di mobile."
           subLinks={[
             { id: 'mbtn-oneword', label: 'Icon + 1-Word Action Set' },
             { id: 'mbtn-badges', label: 'Compact Status & Metric Pills' },
+            { id: 'mlt-hairline-table', label: 'Mobile Hairline List vs Desktop Table' },
           ]}
         >
           <UiDocSection
             id="mbtn-oneword"
             title="Icon + 1-Word Action Set"
-            classesHint="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full whitespace-nowrap shrink-0"
-            codeSnippet={`<button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#1C1D21] text-white text-[13px] font-medium whitespace-nowrap">\n  <Plus className="w-4 h-4 shrink-0" />\n  <span className="sm:hidden">Create</span>\n  <span className="hidden sm:inline">Create assignment</span>\n</button>`}
+            classesHint="inline-flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-full whitespace-nowrap shrink-0 bg-[#ee2e65]"
+            codeSnippet={`<button className="inline-flex items-center gap-1.5 h-9 px-3.5 sm:px-4 rounded-full bg-[#ee2e65] hover:bg-[#d82256] text-white text-[13px] font-medium whitespace-nowrap shrink-0">\n  <Plus className="w-4 h-4 shrink-0" />\n  <span className="sm:hidden">Create</span>\n  <span className="hidden sm:inline">Create Component</span>\n</button>`}
           >
             <div className="flex flex-wrap items-center gap-2.5">
               {[
-                { label: 'Create', icon: Plus, style: 'bg-[#1C1D21] text-white hover:bg-[#2E3036]' },
-                { label: 'Add', icon: Plus, style: 'bg-[#1C1D21] text-white hover:bg-[#2E3036]' },
-                { label: 'New', icon: Plus, style: 'bg-[#ee2e65] text-white hover:brightness-105' },
-                { label: 'Save', icon: Save, style: 'bg-[#1C1D21] text-white hover:bg-[#2E3036]' },
-                { label: 'Export', icon: Download, style: 'bg-white text-[#1C1D21] border border-black/[0.08] hover:bg-[#F4F5F8]' },
-                { label: 'CSV', icon: FileText, style: 'bg-white text-[#1C1D21] border border-black/[0.08] hover:bg-[#F4F5F8]' },
-                { label: 'Statistics', icon: BarChart2, style: 'bg-white text-[#1C1D21] border border-black/[0.08] hover:bg-[#F4F5F8]' },
-                { label: 'Read', icon: CheckCheck, style: 'bg-[#FEF1F5] text-[#9D113C] border border-[#FBC2D4]' },
+                { label: 'Create', icon: Plus, style: 'bg-[#ee2e65] text-white hover:bg-[#d82256]' },
+                { label: 'Add', icon: Plus, style: 'bg-[#ee2e65] text-white hover:bg-[#d82256]' },
+                { label: 'Save', icon: Save, style: 'bg-[#ee2e65] text-white hover:bg-[#d82256]' },
+                { label: 'Export', icon: Download, style: 'bg-white text-[#1C1D21] border border-black/[0.14] hover:bg-[#FAFBFD]' },
+                { label: 'CSV', icon: FileText, style: 'bg-white text-[#1C1D21] border border-black/[0.14] hover:bg-[#FAFBFD]' },
+                { label: 'Statistics', icon: BarChart2, style: 'bg-white text-[#1C1D21] border border-black/[0.14] hover:bg-[#FAFBFD]' },
+                { label: 'Read', icon: CheckCheck, style: 'bg-[#FEF1F5] text-[#9D113C] border border-[#FBC2D4]/70 hover:bg-[#FDE0E9]' },
                 { label: 'Back', icon: ArrowLeft, style: 'bg-[#F4F5F8] text-[#1C1D21] hover:bg-gray-200/70' },
               ].map((btn) => {
                 const Icon = btn.icon;
@@ -429,7 +412,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                     key={btn.label}
                     type="button"
                     onClick={() => triggerToast(btn.label, `Tombol mobile "${btn.label}" ditekan.`, 'info')}
-                    className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full text-[12.5px] font-semibold transition-all active:scale-95 whitespace-nowrap shrink-0 cursor-pointer ${btn.style}`}
+                    className={`inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-full text-[13px] font-medium transition-colors active:scale-95 whitespace-nowrap shrink-0 cursor-pointer ${btn.style}`}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{btn.label}</span>
@@ -446,19 +429,103 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
             codeSnippet={`<span className="px-2.5 py-1 rounded-full bg-[#FFF5E6] text-[#8C5811] text-[11.5px] font-bold">Avg 93%</span>`}
           >
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="px-2.5 py-1 rounded-full bg-[#FFF5E6] text-[#8C5811] text-[11.5px] font-bold">
+              <span className="px-2.5 py-1 rounded-full bg-[#FFF5E6] text-[#8C5811] text-[11.5px] font-bold tabular-nums">
                 Avg 93%
               </span>
-              <span className="px-2.5 py-1 rounded-full bg-[#FFECEB] text-[#942922] text-[11.5px] font-bold">
+              <span className="px-2.5 py-1 rounded-full bg-[#FFECEB] text-[#942922] text-[11.5px] font-bold tabular-nums">
                 4 Unread
               </span>
-              <span className="px-2.5 py-1 rounded-full bg-[#E6F9F0] text-[#146C43] text-[11.5px] font-bold">
+              <span className="px-2.5 py-1 rounded-full bg-[#E6F9F0] text-[#146C43] text-[11.5px] font-bold tabular-nums">
                 4 Honor
               </span>
-              <span className="px-2.5 py-1 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11.5px] font-bold">
+              <span className="px-2.5 py-1 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11.5px] font-bold tabular-nums">
                 10 Total
               </span>
             </div>
+          </UiDocSection>
+
+          <UiDocSection
+            id="mlt-hairline-table"
+            title="Mobile Hairline List vs Desktop Table"
+            description="Pada layar kecil (< 768px), tabel lebar diganti daftar garis tipis tanpa kartu berat (divide-y divide-black/[0.12]) yang merender langsung di kanvas putih."
+            classesHint="md:hidden divide-y divide-black/[0.12] | hidden md:block rounded-2xl border overflow-hidden"
+            codeSnippet={`{/* Mobile Hairline List */}\n<div className="md:hidden divide-y divide-black/[0.12]">\n  {rows.map(r => (\n    <div className="py-3 flex items-center justify-between gap-3">\n      <div className="flex items-center gap-2.5 min-w-0">...</div>\n      <span className="text-xs font-bold tabular-nums">{r.score}</span>\n    </div>\n  ))}\n</div>`}
+            actions={
+              <div className="inline-flex bg-gray-100 p-0.5 rounded-lg text-[11px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setHairlineMode('mobile')}
+                  className={`px-2.5 py-1 rounded-md cursor-pointer transition-all ${
+                    hairlineMode === 'mobile' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600'
+                  }`}
+                >
+                  Mobile List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHairlineMode('desktop')}
+                  className={`px-2.5 py-1 rounded-md cursor-pointer transition-all ${
+                    hairlineMode === 'desktop' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600'
+                  }`}
+                >
+                  Desktop Table
+                </button>
+              </div>
+            }
+          >
+            {hairlineMode === 'mobile' ? (
+              <div className="max-w-sm mx-auto bg-white rounded-[22px] border border-black/[0.12] px-4 py-1 divide-y divide-black/[0.12]">
+                {[
+                  { init: 'SA', name: 'Sarah Anderson', sub: 'Token Layout · 14 Sep', val: '96%', tone: 'bg-[#E6F9F0] text-[#146C43]' },
+                  { init: 'JW', name: 'James Wilson', sub: 'Motion Spec · 15 Sep', val: '92%', tone: 'bg-[#FEF1F5] text-[#9D113C]' },
+                  { init: 'EC', name: 'Emily Carter', sub: 'Grid Audit · 16 Sep', val: '85%', tone: 'bg-[#FFF5E6] text-[#8C5811]' },
+                ].map((item) => (
+                  <div key={item.name} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11px] font-bold flex items-center justify-center shrink-0">
+                        {item.init}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-semibold text-[#1C1D21] truncate">{item.name}</div>
+                        <div className="text-[11px] text-[#646772] truncate">{item.sub}</div>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums shrink-0 ${item.tone}`}>
+                      {item.val}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-gray-300 overflow-x-auto bg-white text-xs">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-gray-50 border-b border-gray-300 text-gray-600">
+                    <tr>
+                      <th className="py-2.5 px-3.5 font-semibold">Reviewer</th>
+                      <th className="py-2.5 px-3.5 font-semibold">Scope</th>
+                      <th className="py-2.5 px-3.5 font-semibold text-right">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 tabular-nums">
+                    <tr>
+                      <td className="py-2.5 px-3.5 font-semibold text-gray-900">Sarah Anderson</td>
+                      <td className="py-2.5 px-3.5 text-gray-600">Token Layout · 14 Sep</td>
+                      <td className="py-2.5 px-3.5 text-right font-bold text-[#146C43]">96%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3.5 font-semibold text-gray-900">James Wilson</td>
+                      <td className="py-2.5 px-3.5 text-gray-600">Motion Spec · 15 Sep</td>
+                      <td className="py-2.5 px-3.5 text-right font-bold text-[#9D113C]">92%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2.5 px-3.5 font-semibold text-gray-900">Emily Carter</td>
+                      <td className="py-2.5 px-3.5 text-gray-600">Grid Audit · 16 Sep</td>
+                      <td className="py-2.5 px-3.5 text-right font-bold text-[#8C5811]">85%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
           </UiDocSection>
         </UiDocPage>
       )}
@@ -474,33 +541,33 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
             id="mbs-interactive"
             title="Interactive Swipeable Bottom Sheet"
             classesHint="rounded-t-[28px] shadow-2xl animate-bottom-sheet / useBottomSheetMotion"
-            codeSnippet={`const { setSheetElement, backdropRef, animateClose, sheetGestureProps } = useBottomSheetMotion({ onClose });\n\n<div ref={backdropRef} data-modal-sheet-backdrop="true" className="fixed inset-0 z-50 flex items-end">\n  <div ref={setSheetElement} {...sheetGestureProps} className="w-full bg-white rounded-t-[28px] p-5 animate-bottom-sheet">\n    <div data-sheet-handle="true" className="w-10 h-1 bg-black/15 rounded-full mx-auto" />\n    ...\n  </div>\n</div>`}
+            codeSnippet={`const { setSheetElement, backdropRef, animateClose, sheetGestureProps } = useBottomSheetMotion({ onClose });\n\n<div ref={backdropRef} data-modal-sheet-backdrop="true" className="fixed inset-0 z-50 flex items-end">\n  <div ref={setSheetElement} {...sheetGestureProps} className="w-full bg-white rounded-t-[28px] p-5 animate-bottom-sheet">\n    <div data-sheet-handle="true" className="w-10 h-1 bg-black/20 rounded-full mx-auto" />\n    ...\n  </div>\n</div>`}
           >
             <div className="bg-[#E8EAEE] rounded-2xl p-5 sm:p-6 flex flex-col items-center gap-4">
-              <div className="w-full max-w-[340px] bg-white rounded-[26px] p-4 space-y-3 shadow-lg border border-black/[0.06]">
+              <div className="w-full max-w-[340px] bg-white rounded-[26px] p-4 space-y-3 shadow-lg border border-black/[0.12]">
                 <div className="flex justify-center">
-                  <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+                  <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-full bg-[#FEF1F5] text-[#9D113C] flex items-center justify-center font-bold text-xs">
-                      RS
+                      UI
                     </div>
                     <div>
-                      <div className="text-[13.5px] font-semibold text-[#1C1D21]">Student Profile Sheet</div>
-                      <div className="text-[11px] text-[#8A8D98]">Tarik handle ke bawah untuk menutup</div>
+                      <div className="text-[13.5px] font-semibold text-[#1C1D21]">Component Sheet</div>
+                      <div className="text-[11px] text-[#646772]">Tarik handle ke bawah untuk menutup</div>
                     </div>
                   </div>
-                  <span className="w-7 h-7 rounded-full bg-[#F4F5F8] flex items-center justify-center text-[#6E717A]">
+                  <span className="w-7 h-7 rounded-full bg-[#F4F5F8] flex items-center justify-center text-[#5A5D67]">
                     <X className="w-3.5 h-3.5" />
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="p-2.5 rounded-2xl bg-[#E6F9F0] text-[#146C43] font-semibold">
-                    Attendance · 96%
+                    Tokens · 96%
                   </div>
                   <div className="p-2.5 rounded-2xl bg-[#FEF1F5] text-[#9D113C] font-semibold">
-                    Mean · 92.4%
+                    Coverage · 92.4%
                   </div>
                 </div>
               </div>
@@ -508,7 +575,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
               <button
                 type="button"
                 onClick={() => setSheetOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1C1D21] hover:bg-[#2E3036] text-white text-xs font-semibold shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[#ee2e65] hover:bg-[#d82256] text-white text-xs font-semibold shadow-xs cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Buka Live Bottom Sheet</span>
@@ -531,13 +598,13 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                       data-sheet-handle="true"
                       className="flex justify-center py-2 -mt-2 cursor-grab active:cursor-grabbing touch-none sm:hidden"
                     >
-                      <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+                      <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-[16px] font-semibold text-[#1C1D21]">Live Mobile Bottom Sheet</h3>
-                        <p className="text-[12px] text-[#8A8D98]">
+                        <p className="text-[12px] text-[#646772]">
                           Tarik handle ke bawah di layar sentuh atau tekan Tutup.
                         </p>
                       </div>
@@ -545,13 +612,13 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                         type="button"
                         onClick={animateClose}
                         aria-label="Close sheet"
-                        className="w-8 h-8 rounded-full hover:bg-[#F4F5F8] flex items-center justify-center text-[#6E717A] cursor-pointer"
+                        className="w-8 h-8 rounded-full hover:bg-[#F4F5F8] flex items-center justify-center text-[#5A5D67] cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-[#FAFBFD] border border-black/[0.05] text-xs text-[#5A5D67] leading-relaxed">
+                    <div className="p-3.5 rounded-2xl bg-[#FAFBFD] border border-black/[0.10] text-xs text-[#5A5D67] leading-relaxed">
                       Sheet ini memakai hook <code className="px-1 py-0.5 rounded bg-gray-100">useBottomSheetMotion</code> untuk mendukung gestur seret ke bawah secara halus dengan akselerasi spring.
                     </div>
 
@@ -559,7 +626,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                       <button
                         type="button"
                         onClick={animateClose}
-                        className="px-4 py-2 rounded-full bg-[#1C1D21] text-white text-xs font-semibold cursor-pointer"
+                        className="h-9 px-4 rounded-full bg-[#ee2e65] hover:bg-[#d82256] text-white text-xs font-semibold cursor-pointer"
                       >
                         Tutup
                       </button>
@@ -576,10 +643,11 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
       {activeSubJump === 'Mobile Gestures & Slide' && (
         <UiDocPage
           title="Mobile Gestures & Slide"
-          description="Interaksi sentuh khusus mobile: Elastic Header Pull-to-Refresh bergaya pegas dan Horizontal Slide Indicator tanpa scrollbar."
+          description="Interaksi sentuh khusus mobile: Elastic Header Pull-to-Refresh bergaya pegas, Horizontal Slide Indicator tanpa scrollbar, serta transisi halaman arah adaptif dan Sheet Depth Pull-Back."
           subLinks={[
             { id: 'mgs-ptr', label: 'Elastic Header Pull to Refresh' },
             { id: 'mgs-slide', label: 'Horizontal Slide Indicator' },
+            { id: 'mgs-transition-depth', label: 'Responsive PageTransition & Sheet Pull-Back' },
           ]}
         >
           <UiDocSection
@@ -599,7 +667,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
             }
           >
             <div className="bg-[#E8EAEE] rounded-2xl p-4 sm:p-6 flex justify-center">
-              <div className="w-full max-w-[340px] h-[250px] bg-white rounded-[24px] border border-black/[0.06] shadow-md overflow-hidden flex flex-col">
+              <div className="w-full max-w-[340px] h-[250px] bg-white rounded-[24px] border border-black/[0.12] shadow-md overflow-hidden flex flex-col">
                 <ElasticPullToRefresh
                   allowDesktopMousePull
                   demoTriggerSeq={ptrDemoSeq}
@@ -608,10 +676,10 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                   <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
                     <div className="text-xs font-semibold text-[#1C1D21]">Tarik ke bawah area ini</div>
                     <div className="p-3 rounded-2xl bg-[#EEF8F3] text-xs text-[#146C43] font-medium">
-                      Daily Attendance · 95.8%
+                      Design Tokens · Synced
                     </div>
                     <div className="p-3 rounded-2xl bg-[#FEF1F5] text-xs text-[#9D113C] font-medium">
-                      Upcoming Exams · 6 Scheduled
+                      Motion Specs · 12 Categories
                     </div>
                   </div>
                 </ElasticPullToRefresh>
@@ -625,10 +693,10 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
             classesHint="HorizontalSlideTrack activeKey={active} accent='dark'"
             codeSnippet={`<HorizontalSlideTrack activeKey={month} accent="dark">\n  {months.map(m => <button data-slide-active={month === m}>{m}</button>)}\n</HorizontalSlideTrack>`}
           >
-            <div className="max-w-sm bg-[#FAFBFD] p-4 rounded-2xl border border-black/[0.05] space-y-3">
+            <div className="max-w-sm bg-[#FAFBFD] p-4 rounded-2xl border border-black/[0.12] space-y-3">
               <HorizontalSlideTrack
                 activeKey={slideMonth}
-                trackClassName="inline-flex items-center gap-1.5 bg-white p-1 rounded-full border border-black/[0.06] max-w-full select-none"
+                trackClassName="inline-flex items-center gap-1.5 bg-white p-1 rounded-full border border-black/[0.12] max-w-full select-none"
                 accent="dark"
               >
                 {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'].map((m) => (
@@ -638,15 +706,124 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                     data-slide-active={slideMonth === m ? 'true' : undefined}
                     onClick={() => setSlideMonth(m)}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer ${
-                      slideMonth === m ? 'bg-[#1C1D21] text-white' : 'text-[#6E717A] hover:text-[#1C1D21]'
+                      slideMonth === m ? 'bg-[#ee2e65] text-white' : 'text-[#5A5D67] hover:text-[#1C1D21]'
                     }`}
                   >
                     {m}
                   </button>
                 ))}
               </HorizontalSlideTrack>
-              <div className="text-[11.5px] text-[#8A8D98]">
+              <div className="text-[11.5px] text-[#646772]">
                 Bulan terpilih: <strong className="text-[#1C1D21]">{slideMonth}</strong>
+              </div>
+            </div>
+          </UiDocSection>
+
+          <UiDocSection
+            id="mgs-transition-depth"
+            title="Responsive PageTransition & Sheet Pull-Back"
+            description="Transisi konten adaptif menggunakan spring X-axis di mobile & Y-axis di desktop (dibungkus MotionConfig reducedMotion='user'), serta efek depth pull-back pada .app-shell-container saat Bottom Sheet aktif."
+            classesHint="PageTransition transitionKey={key} directionOverride={dir} | .app-shell-container"
+            codeSnippet={`<MotionConfig reducedMotion="user">\n  <PageTransition transitionKey={\`\${uiCategory}-\${uiSubJump}\`} directionOverride={dir}>\n    <Content />\n  </PageTransition>\n</MotionConfig>`}
+            actions={
+              <button
+                type="button"
+                onClick={() => setDepthPullDemo((v) => !v)}
+                className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[11.5px] font-semibold cursor-pointer ${
+                  depthPullDemo ? 'bg-[#ee2e65] text-white' : 'bg-[#F4F5F8] text-[#1C1D21]'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5 shrink-0" />
+                <span>{depthPullDemo ? 'Tutup Sheet Pull-Back' : 'Simulasi Depth Pull-Back'}</span>
+              </button>
+            }
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* PageTransition axis preview */}
+              <div className="rounded-2xl border border-gray-300 bg-[#FAFBFD] p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-[#1C1D21]">Adaptive Axis Switch (Mobile X vs Desktop Y)</span>
+                  <div className="flex items-center gap-1">
+                    {['Grid', 'Buttons', 'Cards'].map((lbl, idx) => (
+                      <button
+                        key={lbl}
+                        type="button"
+                        onClick={() => {
+                          setTransitionDir(idx >= transitionTab ? 1 : -1);
+                          setTransitionTab(idx);
+                        }}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer transition-colors ${
+                          transitionTab === idx ? 'bg-[#ee2e65] text-white' : 'bg-white text-gray-600 border border-gray-300'
+                        }`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="h-24 rounded-xl bg-white border border-gray-300 overflow-hidden relative flex items-center justify-center p-4">
+                  <AnimatePresence mode="popLayout" initial={false} custom={transitionDir}>
+                    <motion.div
+                      key={transitionTab}
+                      custom={transitionDir}
+                      initial={{ opacity: 0, x: transitionDir * 24, scale: 0.985 }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                        scale: 1,
+                        transition: {
+                          x: { type: 'spring', stiffness: 400, damping: 34, mass: 0.85 },
+                          opacity: { duration: 0.2 },
+                        },
+                      }}
+                      exit={{
+                        opacity: 0,
+                        x: transitionDir * -20,
+                        scale: 0.99,
+                        transition: { duration: 0.16 },
+                      }}
+                      className="text-center space-y-1"
+                    >
+                      <div className="text-xs font-bold text-[#1C1D21]">
+                        Halaman {['1. Grid System', '2. Action Buttons', '3. Pastel Cards'][transitionTab]}
+                      </div>
+                      <div className="text-[11px] text-[#5A5D67]">
+                        Spring directional transition (stiffness: 400, damping: 36)
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* App Shell Depth Pull-Back Preview */}
+              <div className="rounded-2xl border border-gray-300 bg-[#E8EAEE] p-4 flex items-center justify-center relative overflow-hidden min-h-[164px]">
+                <div
+                  className="w-full max-w-[260px] h-[132px] bg-white rounded-[20px] p-3 border border-black/[0.12] shadow-sm transition-all duration-[240ms] ease-[cubic-bezier(0.23,1,0.32,1)]"
+                  style={{
+                    transform: depthPullDemo ? 'scale(0.95)' : 'scale(1)',
+                    filter: depthPullDemo ? 'brightness(0.88)' : 'none',
+                  }}
+                >
+                  <div className="text-[11px] font-bold text-[#1C1D21]">.app-shell-container</div>
+                  <div className="text-[10px] text-[#646772] mt-1">
+                    {depthPullDemo ? 'Tarik mundur (scale 0.95, brightness 0.88)' : 'Latar normal (scale 1)'}
+                  </div>
+                </div>
+                <AnimatePresence>
+                  {depthPullDemo && (
+                    <motion.div
+                      initial={{ y: 40, opacity: 0, filter: 'blur(3px)' }}
+                      animate={{ y: 0, opacity: 1, filter: 'blur(0px)', transition: { type: 'spring', stiffness: 380, damping: 28 } }}
+                      exit={{ y: 36, opacity: 0, filter: 'blur(2px)', transition: { duration: 0.16, ease: [0.23, 1, 0.32, 1] } }}
+                      className="absolute inset-x-4 bottom-2 bg-white rounded-t-[20px] p-3 shadow-xl border border-black/[0.14] flex items-center justify-between"
+                    >
+                      <span className="text-[11px] font-semibold text-[#1C1D21]">Bottom Sheet Aktif</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#FEF1F5] text-[#ee2e65] text-[10px] font-bold">
+                        Pull-Back
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </UiDocSection>
@@ -670,7 +847,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
             codeSnippet={`createPortal(\n  <div style={{ top, left: 12, right: 12 }} className="fixed bg-white rounded-[24px] shadow-2xl p-4 z-[9999]">\n    <NotificationsHeader />\n    <SegmentedFilter />\n    <NotificationCards />\n  </div>,\n  document.body\n)`}
           >
             <div className="bg-[#E8EAEE] rounded-2xl p-4 sm:p-6 flex justify-center">
-              <div className="w-full max-w-[352px] bg-white rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-black/[0.08] p-4 space-y-3">
+              <div className="w-full max-w-[352px] bg-white rounded-[24px] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-black/[0.14] p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-[15px] font-semibold text-[#1C1D21]">Notifications</span>
@@ -701,7 +878,7 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                       className={`flex-1 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
                         notifTab === tab
                           ? 'bg-white text-gray-900 shadow-2xs font-semibold'
-                          : 'text-gray-500 hover:text-gray-900'
+                          : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
                       {tab}
@@ -722,18 +899,18 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
                           )
                         }
                         className={`w-full text-left p-3 rounded-xl border transition-all flex items-start gap-2.5 cursor-pointer ${
-                          n.unread ? `${theme.bg} border-black/[0.05]` : 'bg-gray-50 border-gray-100'
+                          n.unread ? `${theme.bg} border-black/[0.12]` : 'bg-gray-50 border-gray-200'
                         }`}
                       >
                         <span
                           className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                            n.unread ? theme.dot : 'bg-gray-300'
+                            n.unread ? theme.dot : 'bg-gray-400'
                           }`}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-semibold text-gray-900 truncate">{n.title}</span>
-                            <span className="text-[10.5px] text-gray-400 shrink-0">{n.time}</span>
+                            <span className="text-[10.5px] text-gray-500 shrink-0">{n.time}</span>
                           </div>
                           <p className="text-[11px] text-gray-600 mt-0.5 line-clamp-2">{n.desc}</p>
                         </div>
@@ -785,6 +962,9 @@ export const MobileUiKit: React.FC<MobileUiKitProps> = ({ activeSubJump }) => {
           </UiDocSection>
         </UiDocPage>
       )}
+
+      {/* 8. MOBILE 375PX FIXES */}
+      {activeSubJump === 'Mobile 375px Fixes' && <Mobile375FixesUiKit />}
     </div>
   );
 };

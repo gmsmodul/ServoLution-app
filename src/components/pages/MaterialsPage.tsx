@@ -51,6 +51,7 @@ import { ClassMaterial } from '../../types';
 import { CustomSelect } from '../ui/CustomSelect';
 import { useBottomSheetMotion } from '../../hooks/useBottomSheetMotion';
 import { SplitFilterButton } from '../ui/SplitFilterButton';
+import { InfoPopover } from '../ui/InfoPopover';
 
 type ProgressFilterMode = 'All' | 'Completed' | 'InProgress' | 'NotStarted';
 
@@ -372,10 +373,11 @@ export const MaterialsPage: React.FC = () => {
             <Search className="w-4 h-4 text-[#8A8D98] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              enterKeyHint="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari judul atau topik..."
-              className="w-full sm:w-64 h-9 pl-9 pr-8 rounded-full border border-black/[0.09] text-[13px] bg-white text-[#1C1D21] placeholder:text-[#8A8D98] outline-none focus:border-[#ee2e65]"
+              className="w-full sm:w-64 h-9 pl-9 pr-8 rounded-full border border-black/[0.12] text-[13px] bg-white text-[#1C1D21] placeholder:text-[#8A8D98] outline-none focus:border-[#ee2e65]"
             />
             {searchQuery && (
               <button
@@ -493,11 +495,11 @@ export const MaterialsPage: React.FC = () => {
       ) : (
         <>
           {/* Desktop & Tablet Table */}
-          <div className="hidden md:block overflow-hidden rounded-2xl border border-black/[0.07] bg-white">
+          <div className="hidden md:block overflow-hidden rounded-2xl border border-black/[0.12] bg-white">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#FAFBFD] border-b border-black/[0.05] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+                  <tr className="bg-[#FAFBFD] border-b border-black/[0.08] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
                     <th className="py-3.5 px-5">Materi</th>
                     <th className="py-3.5 px-4">Kelas</th>
                     <th className="py-3.5 px-4">Tipe / Sumber</th>
@@ -505,7 +507,7 @@ export const MaterialsPage: React.FC = () => {
                     <th className="py-3.5 px-5 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.05] text-[13px]">
+                <tbody className="divide-y divide-black/[0.08] text-[13px]">
                   {filteredMaterials.map((mat) => {
                     const TypeIcon = getTypeIcon(mat.type);
                     const theme = PASTEL_THEMES[mat.theme] || PASTEL_THEMES.periwinkle;
@@ -666,7 +668,7 @@ export const MaterialsPage: React.FC = () => {
           </div>
 
           {/* Mobile View: Unified Clean Hairline List */}
-          <div className="md:hidden bg-white rounded-2xl border border-black/[0.07] divide-y divide-black/[0.06] overflow-hidden">
+          <div className="md:hidden bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden">
             {filteredMaterials.map((mat) => {
               const TypeIcon = getTypeIcon(mat.type);
               const theme = PASTEL_THEMES[mat.theme] || PASTEL_THEMES.periwinkle;
@@ -794,26 +796,25 @@ export const MaterialsPage: React.FC = () => {
 
       {/* SECTION 2: 1 BLOCK TERSENDIRI MONITORING CREW DI BAWAH DAFTAR MATERI */}
       {canViewMonitoringBlock && (
-        <section className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
+        <section className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
           {/* Block Header + Opsi Siapa yang Dapat Melihat Block Ini */}
-          <div className="p-5 border-b border-black/[0.06] flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#FAFBFD]">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-[#FEF1F5] text-[#9D113C] flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4" />
+          <div className="p-5 border-b border-black/[0.08] flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#FAFBFD]">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-[#FEF1F5] text-[#9D113C] flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4" />
+              </span>
+              <h2 className="text-[16px] font-bold text-[#1C1D21]">
+                Monitoring Servolution Crew
+              </h2>
+              <InfoPopover
+                label="Informasi Monitoring Servolution Crew"
+                content="Progress terisi otomatis berdasarkan materi yang dibaca dan persentase video yang ditonton oleh setiap crew."
+              />
+              {overallCrewStats.totalPairs > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11px] font-bold tabular-nums">
+                  {overallCrewStats.completedPairs}/{overallCrewStats.totalPairs} Selesai · {overallCrewStats.avgPct}%
                 </span>
-                <h2 className="text-[16px] font-bold text-[#1C1D21]">
-                  Monitoring Servolution Crew
-                </h2>
-                {overallCrewStats.totalPairs > 0 && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11px] font-bold tabular-nums">
-                    {overallCrewStats.completedPairs}/{overallCrewStats.totalPairs} Selesai · {overallCrewStats.avgPct}%
-                  </span>
-                )}
-              </div>
-              <p className="text-[12px] text-[#6E717A]">
-                Progress terisi otomatis berdasarkan materi yang dibaca dan persentase video yang ditonton oleh setiap crew.
-              </p>
+              )}
             </div>
 
             {/* Pengaturan Siapa yang Dapat Melihat Block Ini */}
@@ -860,13 +861,14 @@ export const MaterialsPage: React.FC = () => {
                 <Search className="w-3.5 h-3.5 text-[#8A8D98] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
+                  enterKeyHint="search"
                   value={monitoringSearch}
                   onChange={(e) => {
                     setMonitoringSearch(e.target.value);
                     setMonitoringPage(1);
                   }}
                   placeholder="Cari nama crew..."
-                  className="w-full sm:w-48 h-8 pl-8 pr-7 rounded-full border border-black/[0.09] text-[12px] bg-white text-[#1C1D21] placeholder:text-[#8A8D98] outline-none focus:border-[#ee2e65]"
+                  className="w-full sm:w-48 h-8 pl-8 pr-7 rounded-full border border-black/[0.12] text-[12px] bg-white text-[#1C1D21] placeholder:text-[#8A8D98] outline-none focus:border-[#ee2e65]"
                 />
                 {monitoringSearch && (
                   <button
@@ -1245,13 +1247,13 @@ export const MaterialsPage: React.FC = () => {
             <div
               ref={setSheetElement}
               {...sheetGestureProps}
-              className="bg-white rounded-t-[28px] sm:rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-black/[0.08] max-h-[90vh] overflow-y-auto space-y-4 animate-bottom-sheet"
+              className="bg-white rounded-t-[28px] sm:rounded-2xl max-w-2xl w-full p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 shadow-2xl border border-black/[0.12] max-h-[90vh] overflow-y-auto space-y-4 animate-bottom-sheet"
             >
               <div
                 data-sheet-handle="true"
                 className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
               >
-                <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+                <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
               </div>
 
               {/* Header */}
@@ -1484,10 +1486,11 @@ export const MaterialsPage: React.FC = () => {
                         {summary.totalCrew > 4 && (
                           <input
                             type="text"
+                            enterKeyHint="search"
                             value={modalCrewSearch}
                             onChange={(e) => setModalCrewSearch(e.target.value)}
                             placeholder="Cari crew..."
-                            className="h-7 px-3 rounded-full border border-black/[0.09] text-[11.5px] bg-white text-[#1C1D21] outline-none focus:border-[#ee2e65] w-36"
+                            className="h-7 px-3 rounded-full border border-black/[0.12] text-[11.5px] bg-white text-[#1C1D21] outline-none focus:border-[#ee2e65] w-36"
                           />
                         )}
                       </div>

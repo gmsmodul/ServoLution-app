@@ -52,13 +52,13 @@ export const StudentDetailSheet: React.FC = () => {
       <div
         ref={setSheetElement}
         {...sheetGestureProps}
-        className="w-full sm:max-w-md bg-white rounded-t-[28px] sm:rounded-[26px] p-6 space-y-4 shadow-2xl animate-bottom-sheet"
+        className="w-full sm:max-w-md bg-white rounded-t-[28px] sm:rounded-[26px] border border-black/[0.12] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 space-y-4 shadow-2xl animate-bottom-sheet"
       >
         <div
           data-sheet-handle="true"
           className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
         >
-          <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -80,18 +80,18 @@ export const StudentDetailSheet: React.FC = () => {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-black/[0.06] grid grid-cols-2 divide-x divide-black/[0.06] text-[12.5px] overflow-hidden">
+        <div className="rounded-2xl border border-black/[0.12] grid grid-cols-2 divide-x divide-black/[0.08] text-[12.5px] overflow-hidden">
           <div className="p-3.5 bg-[#E6F9F0]">
             <div className="text-[#146C43] font-semibold text-[11px]">Attendance Rate</div>
-            <div className="text-[20px] font-bold text-[#1C1D21] mt-0.5 tabular-nums">{student.rate}%</div>
+            <div className="kpi-value text-[20px] font-bold text-[#1C1D21] mt-0.5 tabular-nums">{student.rate}%</div>
           </div>
           <div className="p-3.5 bg-[#FEF1F5]">
             <div className="text-[#9D113C] font-semibold text-[11px]">Mean Score</div>
-            <div className="text-[20px] font-bold text-[#1C1D21] mt-0.5 tabular-nums">{student.score}%</div>
+            <div className="kpi-value text-[20px] font-bold text-[#1C1D21] mt-0.5 tabular-nums">{student.score}%</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-black/[0.07] divide-y divide-black/[0.05] text-[12px] overflow-hidden">
+        <div className="bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] text-[12px] overflow-hidden">
           <div className="flex items-center gap-2.5 px-3.5 py-2.5 text-[#5A5D67]">
             <UserCheck className="w-4 h-4 text-[#ee2e65] shrink-0" />
             <span>Guardian: <strong className="text-[#1C1D21]">{student.guardian}</strong></span>

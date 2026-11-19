@@ -108,17 +108,17 @@ export const SubmissionReviewModal: React.FC = () => {
         ref={setSheetElement}
         {...sheetGestureProps}
         onSubmit={handleSaveGrade}
-        className="w-full sm:max-w-2xl bg-white rounded-t-[28px] sm:rounded-[26px] p-5 sm:p-6 space-y-4 shadow-2xl border border-black/[0.08] max-h-[92vh] overflow-y-auto animate-bottom-sheet"
+        className="w-full sm:max-w-2xl bg-white rounded-t-[28px] sm:rounded-[26px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:p-6 space-y-4 shadow-2xl border border-black/[0.12] max-h-[92vh] overflow-y-auto animate-bottom-sheet"
       >
         <div
           data-sheet-handle="true"
           className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
         >
-          <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
         </div>
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 pb-3 border-b border-black/[0.06]">
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-black/[0.08]">
           <div className="flex items-center gap-3 min-w-0">
             <span
               className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 ${targetSubmission.color}`}
@@ -182,7 +182,7 @@ export const SubmissionReviewModal: React.FC = () => {
                 return (
                   <div
                     key={q.id}
-                    className="rounded-2xl border border-black/[0.08] bg-[#FAFBFD] p-4 space-y-2.5"
+                    className="rounded-2xl border border-black/[0.12] bg-[#FAFBFD] p-4 space-y-2.5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="px-2 py-0.5 rounded-full bg-white border border-black/[0.08] text-[10.5px] font-bold text-[#1C1D21]">
@@ -340,7 +340,7 @@ export const SubmissionReviewModal: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2.5 pt-2 border-t border-black/[0.06]">
+        <div className="flex gap-2.5 pt-2 border-t border-black/[0.08]">
           <button
             type="button"
             onClick={animateClose}

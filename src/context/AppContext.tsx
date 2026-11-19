@@ -14,7 +14,9 @@ import {
   TrainerFeedbackParameter,
   TrainerFeedbackRecord,
   MessageThread,
+  ReportExportFormat,
   ReportItem,
+  ReportMenuKey,
   NotificationItem,
   ClassMaterial,
   LiveQuiz,
@@ -26,6 +28,7 @@ import {
   ExamGradingRule,
   BatchRecord,
   BatchDataset,
+  PastelThemeKey,
 } from '../types';
 import { apiService } from '../services/api';
 import {
@@ -39,6 +42,22 @@ import {
   getAssignmentSchedulePhase,
 } from '../utils/assignmentSchedule';
 import { buildAutoReminderNotifications } from '../utils/reminderNotifications';
+import { playUiMotionSound } from '../utils/uiMotionSound';
+import {
+  flushOfflineQueue,
+  getOfflineQueueCount,
+  subscribeOfflineQueue,
+} from '../utils/offlineSyncQueue';
+import { UI_KIT_CATALOG } from '../components/uikit/uiKitCatalog';
+import {
+  CompiledMenuReport,
+  REPORT_MENU_CATALOG,
+  compileMenuReport,
+  formatExportFormatLabel,
+  getReportMenuMeta,
+  resolveMenuKeyFromReportItem,
+} from '../utils/reportBuilders';
+import { exportCompiledReport } from '../utils/reportExporters';
 import {
   INITIAL_EXAMS,
   INITIAL_ASSIGNMENTS,
@@ -63,6 +82,120 @@ import {
   createSeedBatchDataset,
   normalizeExamGradingRule,
 } from '../data/batchDefaults';
+
+export interface UiKitUpdateItem {
+  id: string;
+  title: string;
+  desc: string;
+  time: string;
+  unread: boolean;
+  theme: PastelThemeKey;
+  groupId: string;
+  itemLabel: string;
+  sectionId?: string;
+}
+
+const INITIAL_UI_UPDATES: UiKitUpdateItem[] = [
+  {
+    id: 'UI-UPD-OPT',
+    title: 'App Optimization (Optimistic UI, Skeletons, Preload & Offline Queue)',
+    desc: 'Code-split lazy chunks + shimmer skeletons, cache-first navigation & batch hydration, tactile scale(0.97) press physics, and offline mutation replay queue.',
+    time: 'Just now',
+    unread: true,
+    theme: 'periwinkle',
+    groupId: 'behavioral',
+    itemLabel: 'App Optimization',
+    sectionId: 'opt-optimistic',
+  },
+  {
+    id: 'UI-UPD-375',
+    title: 'Mobile 375px Fixes (Tables→Cards, 16px, 44px, Safe-Area)',
+    desc: 'Table-to-Card below 640px, single-line KPI .kpi-value clamp, 16px anti-zoom inputs + numeric keyboards, 44px touch targets (pointer: coarse), and safe-area bottom clearance.',
+    time: 'Just now',
+    unread: true,
+    theme: 'mint',
+    groupId: 'mobilekit',
+    itemLabel: 'Mobile 375px Fixes',
+    sectionId: 'm375-tables',
+  },
+  {
+    id: 'UI-UPD-MUX',
+    title: '6 Menu UX Rules (Type to Filter, Typed Dates, Reasons Not Grey)',
+    desc: 'Auto-search >10 rows, typed dates + month/year jump, stay-open multi-select with Done CTA, collision-aware flip-up, inline blockers & inline controls <5 options.',
+    time: 'Just now',
+    unread: true,
+    theme: 'periwinkle',
+    groupId: 'dataentry',
+    itemLabel: 'Menu UX Rules',
+    sectionId: 'mux-type-filter',
+  },
+  {
+    id: 'UI-UPD-KGT',
+    title: 'Kanban Board, Gantt Chart & Timeline',
+    desc: 'Interactive drag-and-drop Kanban columns, 14-day sprint Gantt chart, and chronological activity/milestone timelines.',
+    time: 'Just now',
+    unread: true,
+    theme: 'coral',
+    groupId: 'datadisplay',
+    itemLabel: 'Kanban Board',
+    sectionId: 'knb-interactive',
+  },
+  {
+    id: 'UI-UPD-00',
+    title: 'Motion & Animations Showcase',
+    desc: 'Interactive preview for CSS easing curves, stagger cascades, drawers, springs & reduced-motion rules.',
+    time: 'Just now',
+    unread: true,
+    theme: 'periwinkle',
+    groupId: 'behavioral',
+    itemLabel: 'Motion & Animations',
+    sectionId: 'mot-easing',
+  },
+  {
+    id: 'UI-UPD-01',
+    title: 'Primary Rose (#ee2e65) Action Pills',
+    desc: 'Standardized primary CTAs & responsive mobile 1-word pill controls unified in Data Entry.',
+    time: '5m ago',
+    unread: true,
+    theme: 'coral',
+    groupId: 'dataentry',
+    itemLabel: 'Buttons',
+    sectionId: 'btn-action-pills',
+  },
+  {
+    id: 'UI-UPD-02',
+    title: 'Directional Widening 3-Col Carousel',
+    desc: 'Clip-path column wipe expansion, swipe pagination & 14-bar segmented vertical meter.',
+    time: '12m ago',
+    unread: true,
+    theme: 'periwinkle',
+    groupId: 'datadisplay',
+    itemLabel: 'Carousel',
+    sectionId: 'car-widening',
+  },
+  {
+    id: 'UI-UPD-03',
+    title: 'Motion Accordion & Checklist Strip',
+    desc: 'Spring height AnimatePresence accordion, pastel KPI metric strip & inline checklist card.',
+    time: '1h ago',
+    unread: true,
+    theme: 'mint',
+    groupId: 'datadisplay',
+    itemLabel: 'Accordion',
+    sectionId: 'acc-motion',
+  },
+  {
+    id: 'UI-UPD-04',
+    title: 'Mobile Hairline List & PageTransition',
+    desc: 'Responsive mobile hairline divider list vs desktop table & directional PageTransition physics.',
+    time: '3h ago',
+    unread: false,
+    theme: 'peach',
+    groupId: 'mobilekit',
+    itemLabel: 'Mobile Compact Buttons',
+    sectionId: 'mlt-hairline-table',
+  },
+];
 
 export function normalizeAttendanceClassKey(rawClassCode: string): string {
   const trimmed = String(rawClassCode || '').trim();
@@ -193,8 +326,21 @@ interface AppContextType {
   // Reports
   reportsList: ReportItem[];
   setReportsList: React.Dispatch<React.SetStateAction<ReportItem[]>>;
-  handleGenerateReport: (rep: Omit<ReportItem, 'id' | 'generatedDate' | 'status' | 'metrics' | 'summary'>) => void;
+  handleGenerateReport: (rep: {
+    title: string;
+    menuKey: ReportMenuKey;
+    classCode: string;
+    preferredExport?: ReportExportFormat;
+    notes?: string;
+    downloadImmediately?: boolean;
+  }) => void;
+  handleDeleteReport: (reportId: string) => void;
   handleDownloadReportCsv: (report: ReportItem) => void;
+  handleExportCompiledReport: (
+    compiled: CompiledMenuReport,
+    format: ReportExportFormat,
+    includeAllMenusBundle?: boolean
+  ) => void;
   isGenerateReportOpen: boolean;
   setIsGenerateReportOpen: (open: boolean) => void;
 
@@ -279,6 +425,21 @@ interface AppContextType {
   setUiSweetAlertType: (type: 'success' | 'confirm' | null) => void;
   uiSessionModal: boolean;
   setUiSessionModal: (open: boolean) => void;
+  uiCategory: string;
+  prevUiCategory: string;
+  uiSubJump: string;
+  prevUiSubJump: string;
+  uiTargetSectionId: string | null;
+  selectUiNode: (groupId: string, subLabel?: string, sectionId?: string) => void;
+  clearUiTargetSection: () => void;
+  uiSearchFocusSeq: number;
+  triggerUiSearchFocus: () => void;
+  isUiMobileSearchOpen: boolean;
+  setIsUiMobileSearchOpen: (open: boolean) => void;
+  uiUpdates: UiKitUpdateItem[];
+  unreadUiUpdatesCount: number;
+  markAllUiUpdatesRead: () => void;
+  handleUiUpdateClick: (item: UiKitUpdateItem) => void;
 
   // Unified Batch & Year Database + Rules
   batches: BatchRecord[];
@@ -302,6 +463,9 @@ interface AppContextType {
   ) => void;
   importBatchRecord: (incoming: BatchRecord) => void;
   saveCurrentBatchSnapshot: (showToast?: boolean) => void;
+  isOnline: boolean;
+  pendingSyncCount: number;
+  syncPendingNow: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -347,13 +511,138 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const activePage = pageState.active;
   const prevPage = pageState.prev;
   const setActivePage = (nextPage: PageId) => {
-    setPageState((curr) =>
-      curr.active === nextPage ? curr : { active: nextPage, prev: curr.active }
-    );
+    setPageState((curr) => {
+      if (curr.active === nextPage) return curr;
+      playUiMotionSound('tick');
+      return { active: nextPage, prev: curr.active };
+    });
   };
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+
+  // UI Kit Catalog Navigation & Updates State
+  const [uiNavState, setUiNavState] = useState<{
+    category: string;
+    prevCategory: string;
+    sub: string;
+    prevSub: string;
+    sectionId: string | null;
+  }>(() => {
+    const cached = apiService.getCachedUiNavState();
+    const matchedGroup =
+      (cached && UI_KIT_CATALOG.find((g) => g.id === cached.category)) || UI_KIT_CATALOG[0];
+    const matchedSub =
+      cached && matchedGroup.items.some((item) => item.label === cached.sub)
+        ? cached.sub
+        : matchedGroup.items[0]?.label || 'Grid';
+    return {
+      category: matchedGroup.id,
+      prevCategory: matchedGroup.id,
+      sub: matchedSub,
+      prevSub: matchedSub,
+      sectionId: null,
+    };
+  });
+  const [uiSearchFocusSeq, setUiSearchFocusSeq] = useState(0);
+  const [isUiMobileSearchOpen, setIsUiMobileSearchOpen] = useState(false);
+  const [uiUpdates, setUiUpdates] = useState<UiKitUpdateItem[]>(() => {
+    const readIds = new Set(apiService.getCachedReadUpdateIds());
+    if (readIds.size === 0) return INITIAL_UI_UPDATES;
+    return INITIAL_UI_UPDATES.map((u) => (readIds.has(u.id) ? { ...u, unread: false } : u));
+  });
+
+  const selectUiNode = useCallback((groupId: string, subLabel?: string, sectionId?: string) => {
+    const group = UI_KIT_CATALOG.find((g) => g.id === groupId) || UI_KIT_CATALOG[0];
+    const resolvedSub =
+      subLabel && group.items.some((item) => item.label === subLabel)
+        ? subLabel
+        : group.items[0]?.label || 'Grid';
+    playUiMotionSound('tick');
+    apiService.saveCachedUiNavState({ category: group.id, sub: resolvedSub });
+    setUiNavState((curr) => ({
+      category: group.id,
+      prevCategory: curr.category,
+      sub: resolvedSub,
+      prevSub: curr.sub,
+      sectionId: sectionId ?? null,
+    }));
+    setPageState((curr) =>
+      curr.active === 'uikit' ? curr : { active: 'uikit', prev: curr.active }
+    );
+  }, []);
+
+  const clearUiTargetSection = useCallback(() => {
+    setUiNavState((curr) => (curr.sectionId ? { ...curr, sectionId: null } : curr));
+  }, []);
+
+  const triggerUiSearchFocus = useCallback(() => {
+    setUiSearchFocusSeq((n) => n + 1);
+  }, []);
+
+  const unreadUiUpdatesCount = useMemo(
+    () => uiUpdates.filter((u) => u.unread).length,
+    [uiUpdates]
+  );
+
+  const markAllUiUpdatesRead = useCallback(() => {
+    setUiUpdates((prev) => {
+      const next = prev.map((u) => ({ ...u, unread: false }));
+      apiService.saveCachedReadUpdateIds(next.map((u) => u.id));
+      return next;
+    });
+    triggerToast('Pembaruan Dibaca', 'Semua catatan UI KIT telah ditandai dibaca.', 'success');
+  }, []);
+
+  const handleUiUpdateClick = useCallback(
+    (item: UiKitUpdateItem) => {
+      setUiUpdates((prev) => {
+        const next = prev.map((u) => (u.id === item.id ? { ...u, unread: false } : u));
+        apiService.saveCachedReadUpdateIds(next.filter((u) => !u.unread).map((u) => u.id));
+        return next;
+      });
+      selectUiNode(item.groupId, item.itemLabel, item.sectionId);
+    },
+    [selectUiNode]
+  );
+
+  // Offline status & persistent sync queue listener
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(() => getOfflineQueueCount());
+
+  const syncPendingNow = useCallback(async () => {
+    const res = await flushOfflineQueue();
+    if (res.flushed > 0) {
+      triggerToast(
+        'Sinkronisasi Selesai',
+        `${res.flushed} perubahan offline berhasil dikirim ke server.`,
+        'success'
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeOfflineQueue(setPendingSyncCount);
+    const onOnline = () => {
+      setIsOnline(true);
+      void syncPendingNow();
+    };
+    const onOffline = () => {
+      setIsOnline(false);
+    };
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    if (typeof navigator !== 'undefined' && navigator.onLine && getOfflineQueueCount() > 0) {
+      void syncPendingNow();
+    }
+    return () => {
+      unsubscribe();
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, [syncPendingNow]);
 
   // Global Search Keyboard Shortcut (Cmd/Ctrl+K always, '/' outside inputs & UIKit)
   useEffect(() => {
@@ -383,6 +672,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const triggerToast = (title: string, message: string, type: 'success' | 'info' | 'warning' | 'error' = 'success') => {
     const id = Date.now() + Math.random();
+    playUiMotionSound(type === 'success' ? 'success' : type === 'error' ? 'land' : 'pop');
     setToasts((prev) => [...prev, { id, title, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -1748,30 +2038,142 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     triggerToast('New Conversation Started', `Message sent to ${createdThread.sender}.`, 'success');
   };
 
-  const handleGenerateReport = (repData: Omit<ReportItem, 'id' | 'generatedDate' | 'status' | 'metrics' | 'summary'>) => {
+  const getReportDatasetInput = useCallback(
+    () => ({
+      activeBatch,
+      graduationRule,
+      examGradingRule,
+      exams,
+      examAssessments,
+      assignments,
+      lessonPlans,
+      schedules,
+      studentsDirectory,
+      trainersDirectory,
+      trainerFeedbackParameters,
+      trainerFeedbacks,
+      materialsList,
+      liveQuizzes,
+      liveQuizReports,
+      attendanceByClass,
+      qrCheckIns,
+    }),
+    [
+      activeBatch,
+      graduationRule,
+      examGradingRule,
+      exams,
+      examAssessments,
+      assignments,
+      lessonPlans,
+      schedules,
+      studentsDirectory,
+      trainersDirectory,
+      trainerFeedbackParameters,
+      trainerFeedbacks,
+      materialsList,
+      liveQuizzes,
+      liveQuizReports,
+      attendanceByClass,
+      qrCheckIns,
+    ]
+  );
+
+  const handleExportCompiledReport = useCallback(
+    (
+      compiled: CompiledMenuReport,
+      format: ReportExportFormat,
+      includeAllMenusBundle = false
+    ) => {
+      try {
+        let extraBundle: CompiledMenuReport[] | undefined;
+        if (includeAllMenusBundle && compiled.menuKey === 'all_menus') {
+          const dataset = getReportDatasetInput();
+          extraBundle = REPORT_MENU_CATALOG.filter((m) => m.key !== 'all_menus').map((m) =>
+            compileMenuReport({
+              menuKey: m.key,
+              classFilter: compiled.classCode,
+              generatedAt: compiled.generatedAt,
+              data: dataset,
+            })
+          );
+        }
+        const filename = exportCompiledReport(format, compiled, extraBundle);
+        triggerToast(
+          `Ekspor ${formatExportFormatLabel(format)} Berhasil`,
+          `${filename} telah diunduh.`,
+          'success'
+        );
+      } catch (err) {
+        triggerToast(
+          'Gagal Mengekspor Laporan',
+          err instanceof Error ? err.message : 'Terjadi kesalahan saat menyiapkan file.',
+          'error'
+        );
+      }
+    },
+    [getReportDatasetInput]
+  );
+
+  const handleGenerateReport = (repData: {
+    title: string;
+    menuKey: ReportMenuKey;
+    classCode: string;
+    preferredExport?: ReportExportFormat;
+    notes?: string;
+    downloadImmediately?: boolean;
+  }) => {
+    const meta = getReportMenuMeta(repData.menuKey);
+    const dataset = getReportDatasetInput();
+    const compiled = compileMenuReport({
+      menuKey: repData.menuKey,
+      classFilter: repData.classCode,
+      title: repData.title,
+      notes: repData.notes,
+      data: dataset,
+    });
+    const exportFmt: ReportExportFormat = repData.preferredExport || 'pdf';
     const created: ReportItem = {
-      ...repData,
       id: 'RPT-' + Date.now(),
-      generatedDate: 'Just now',
+      title: compiled.title,
+      category: meta.category,
+      menuKey: repData.menuKey,
+      preferredExport: exportFmt,
+      notes: repData.notes?.trim() || undefined,
+      classCode: compiled.classCode,
+      generatedDate: compiled.generatedAt,
+      format: formatExportFormatLabel(exportFmt),
       status: 'Ready',
-      metrics: { avgScore: '90.4%', attendance: '97.0%', passRate: '100%' },
-      summary: `Newly compiled ${repData.category.toLowerCase()} report for ${repData.classCode}, verified by Rasengan.`,
+      theme: meta.theme,
+      metrics: compiled.legacyMetrics,
+      summary: compiled.summary,
     };
     setReportsList((prev) => [created, ...prev]);
     setIsGenerateReportOpen(false);
-    triggerToast('Report Generated', `${created.title} is ready to download.`, 'success');
+    if (repData.downloadImmediately) {
+      handleExportCompiledReport(compiled, exportFmt, repData.menuKey === 'all_menus');
+    } else {
+      triggerToast('Laporan Disusun', `"${created.title}" siap ditinjau dan diekspor ke Excel/JSON/CSV/PDF.`, 'success');
+    }
+  };
+
+  const handleDeleteReport = (reportId: string) => {
+    const target = reportsList.find((r) => r.id === reportId);
+    setReportsList((prev) => prev.filter((r) => r.id !== reportId));
+    triggerToast('Laporan Dihapus', target ? `"${target.title}" dihapus dari arsip.` : 'Laporan dihapus.', 'info');
   };
 
   const handleDownloadReportCsv = (report: ReportItem) => {
-    const csvContent = `data:text/csv;charset=utf-8,Report ID,Title,Class,Category,Generated Date,Mean Score,Attendance\n"${report.id}","${report.title}","${report.classCode}","${report.category}","${report.generatedDate}","${report.metrics.avgScore}","${report.metrics.attendance}"`;
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${report.id}_${report.classCode.replace(/\s+/g, '_')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    triggerToast('Report Downloaded', `${report.title} exported successfully.`, 'success');
+    const compiled = compileMenuReport({
+      id: report.id,
+      menuKey: resolveMenuKeyFromReportItem(report),
+      classFilter: report.classCode,
+      title: report.title,
+      notes: report.notes,
+      generatedAt: report.generatedDate,
+      data: getReportDatasetInput(),
+    });
+    handleExportCompiledReport(compiled, 'csv', compiled.menuKey === 'all_menus');
   };
 
   const autoReminderNotifications = useMemo(
@@ -2339,7 +2741,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         reportsList,
         setReportsList,
         handleGenerateReport,
+        handleDeleteReport,
         handleDownloadReportCsv,
+        handleExportCompiledReport,
         isGenerateReportOpen,
         setIsGenerateReportOpen,
 
@@ -2419,6 +2823,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUiSweetAlertType,
         uiSessionModal,
         setUiSessionModal,
+        uiCategory: uiNavState.category,
+        prevUiCategory: uiNavState.prevCategory,
+        uiSubJump: uiNavState.sub,
+        prevUiSubJump: uiNavState.prevSub,
+        uiTargetSectionId: uiNavState.sectionId,
+        selectUiNode,
+        clearUiTargetSection,
+        uiSearchFocusSeq,
+        triggerUiSearchFocus,
+        isUiMobileSearchOpen,
+        setIsUiMobileSearchOpen,
+        uiUpdates,
+        unreadUiUpdatesCount,
+        markAllUiUpdatesRead,
+        handleUiUpdateClick,
 
         batches,
         activeBatchId,
@@ -2432,6 +2851,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateBatchRules,
         importBatchRecord,
         saveCurrentBatchSnapshot,
+        isOnline,
+        pendingSyncCount,
+        syncPendingNow,
       }}
     >
       {children}

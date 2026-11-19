@@ -137,7 +137,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`hidden md:flex md:static inset-y-0 left-0 z-50 h-full max-h-full overflow-hidden shrink-0 flex-col transition-all duration-300 ease-out bg-transparent backdrop-blur-md border-r border-black/[0.04] ${
+      className={`hidden md:flex md:static inset-y-0 left-0 z-50 h-full max-h-full overflow-hidden shrink-0 flex-col transition-all duration-[240ms] ease-[cubic-bezier(0.23,1,0.32,1)] bg-transparent backdrop-blur-md border-r border-black/[0.12] ${
         sidebarOpen ? 'w-[260px]' : 'w-[84px]'
       } p-4 select-none`}
     >
@@ -171,7 +171,7 @@ export const Sidebar: React.FC = () => {
             <div ref={mainMenuRef} className="relative space-y-1">
               <span
                 aria-hidden="true"
-                className={`pointer-events-none absolute left-0 right-0 top-0 rounded-lg bg-white shadow-xs transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`pointer-events-none absolute left-0 right-0 top-0 rounded-lg bg-white shadow-xs transition-[transform,height,opacity] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
                   menuIndicator.visible ? 'opacity-100' : 'opacity-0'
                 }`}
                 style={{
@@ -180,7 +180,7 @@ export const Sidebar: React.FC = () => {
                 }}
               />
               {sidebarOpen && (
-                <div className="relative z-10 px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <div className="relative z-10 px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Main menu
                 </div>
               )}
@@ -193,10 +193,10 @@ export const Sidebar: React.FC = () => {
                     data-sidebar-item="true"
                     ref={isActive ? activeMenuBtnRef : undefined}
                     onClick={() => handleNavClick(item.id)}
-                    className={`relative z-10 w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group cursor-pointer ${
+                    className={`relative z-10 w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group cursor-pointer ${
                       isActive
                         ? `text-gray-900 font-semibold ${menuIndicator.visible ? '' : 'bg-white shadow-xs'}`
-                        : 'text-gray-600 hover:bg-white/60 hover:text-gray-950 font-medium'
+                        : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -222,7 +222,7 @@ export const Sidebar: React.FC = () => {
             {/* System & UI Kit Group */}
             <div className="mt-5 pb-2 space-y-1">
               {sidebarOpen && (
-                <div className="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                <div className="px-3 pb-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500">
                   System & UI Kit
                 </div>
               )}
@@ -234,12 +234,12 @@ export const Sidebar: React.FC = () => {
                     key={item.id}
                     data-sidebar-item="true"
                     onClick={() => handleNavClick(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
                       isActive
                         ? 'bg-[#ee2e65] text-white font-semibold shadow-xs'
                         : item.highlight
                         ? 'bg-primary-50 text-primary-700 font-semibold hover:bg-primary-100'
-                        : 'text-gray-600 hover:bg-white/70 hover:text-gray-950 font-medium'
+                        : 'text-gray-700 hover:bg-white/70 hover:text-gray-950 font-medium'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -254,18 +254,18 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Bottom Settings & Teacher Profile */}
-        <div className="shrink-0 pt-3 mt-2 border-t border-black/[0.05] space-y-2.5">
+        <div className="shrink-0 pt-3 mt-2 border-t border-black/[0.12] space-y-2.5">
           <button
             onClick={() => setActivePage('settings')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
               activePage === 'settings'
                 ? 'bg-white text-gray-900 font-semibold shadow-xs'
-                : 'font-medium text-gray-600 hover:bg-white/70 hover:text-gray-900'
+                : 'font-medium text-gray-700 hover:bg-white/70 hover:text-gray-900'
             }`}
           >
             <Settings
               className={`w-4 h-4 shrink-0 ${
-                activePage === 'settings' ? 'text-[#ee2e65]' : 'text-gray-500'
+                activePage === 'settings' ? 'text-[#ee2e65]' : 'text-gray-600'
               }`}
             />
             {sidebarOpen && <span>Settings</span>}
@@ -273,7 +273,7 @@ export const Sidebar: React.FC = () => {
 
           <div className="px-2">
             {sidebarOpen && (
-              <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">Account</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 px-1">Account</div>
             )}
             <div className="flex items-center gap-3 p-1.5 rounded-2xl hover:bg-white/70 transition-colors cursor-pointer">
               <img
@@ -282,12 +282,12 @@ export const Sidebar: React.FC = () => {
                 onError={(e) => {
                   e.currentTarget.src = 'https://placehold.co/80x80/1C1D21/FFFFFF?text=RS';
                 }}
-                className="w-9 h-9 rounded-full object-cover border border-white shadow-xs shrink-0"
+                className="w-9 h-9 rounded-full object-cover border border-black/[0.10] shadow-xs shrink-0"
               />
               {sidebarOpen && (
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold text-[#1C1D21] truncate">Rasengan</div>
-                  <div className="text-[11px] text-[#8A8D98]">Teacher</div>
+                  <div className="text-[11px] text-[#646772]">Teacher</div>
                 </div>
               )}
             </div>

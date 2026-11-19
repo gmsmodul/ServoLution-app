@@ -45,6 +45,7 @@ import type {
 } from '../../types';
 import type { LiveQuizEmoteEvent, WsConnectionStatus } from '../../hooks/useLiveQuizSocket';
 import { useApp } from '../../context/AppContext';
+import { ToggleSwitch } from '../ui/ToggleSwitch';
 import {
   WAYGROUND_ARENA_THEMES,
   WAYGROUND_OPTION_TILES,
@@ -1821,15 +1822,21 @@ export const LiveQuizHostView: React.FC<LiveQuizHostViewProps> = ({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3">
-                        <label className="inline-flex items-center gap-2 text-[12px] font-medium text-white/85 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
+                        <div className="inline-flex items-center gap-2 text-[12px] font-medium text-white/85 select-none">
+                          <ToggleSwitch
+                            size="sm"
+                            color="emerald"
                             checked={showTimeTaken}
-                            onChange={(e) => setShowTimeTaken(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded border-white/30 bg-transparent accent-[#00C985] cursor-pointer"
+                            onChange={setShowTimeTaken}
+                            ariaLabel="Show time taken"
                           />
-                          <span>Show time taken</span>
-                        </label>
+                          <span
+                            onClick={() => setShowTimeTaken(!showTimeTaken)}
+                            className="cursor-pointer"
+                          >
+                            Show time taken
+                          </span>
+                        </div>
 
                         <button
                           type="button"

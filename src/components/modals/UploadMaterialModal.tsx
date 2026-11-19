@@ -657,16 +657,16 @@ export const UploadMaterialModal: React.FC = () => {
       <div
         ref={setSheetElement}
         {...sheetGestureProps}
-        className="bg-white rounded-t-[28px] sm:rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-black/[0.08] max-h-[90vh] overflow-y-auto space-y-4 animate-bottom-sheet"
+        className="bg-white rounded-t-[28px] sm:rounded-2xl max-w-xl w-full p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 shadow-2xl border border-black/[0.12] max-h-[90vh] overflow-y-auto space-y-4 animate-bottom-sheet"
       >
         <div
           data-sheet-handle="true"
           className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
         >
-          <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
         </div>
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between pb-3 border-b border-black/[0.08]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-900">
               {editingMaterial ? <Edit3 className="w-4 h-4" /> : <UploadCloud className="w-4 h-4" />}
@@ -776,7 +776,7 @@ export const UploadMaterialModal: React.FC = () => {
           </div>
 
           {/* Resource Source Selector */}
-          <div className="rounded-xl border border-black/[0.08] bg-[#FAFBFD] p-3.5 space-y-3">
+          <div className="rounded-xl border border-black/[0.12] bg-[#FAFBFD] p-3.5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-semibold text-gray-800">
                 Sumber Resource
@@ -892,6 +892,7 @@ export const UploadMaterialModal: React.FC = () => {
                     <Search className="w-3.5 h-3.5 text-[#8A8D98] absolute left-2.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
+                      enterKeyHint="search"
                       value={mediaSearch}
                       onChange={(e) => setMediaSearch(e.target.value)}
                       placeholder="Cari media yang ada..."
@@ -911,7 +912,7 @@ export const UploadMaterialModal: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="max-h-44 overflow-y-auto rounded-xl border border-black/[0.08] bg-white divide-y divide-black/[0.06]">
+                <div className="max-h-44 overflow-y-auto rounded-xl border border-black/[0.12] bg-white divide-y divide-black/[0.08]">
                   {filteredExistingMedia.length === 0 ? (
                     <div className="py-6 px-3 text-center text-[12px] text-[#8A8D98]">
                       Tidak ada media yang cocok.
@@ -988,6 +989,7 @@ export const UploadMaterialModal: React.FC = () => {
                   <Search className="w-3.5 h-3.5 text-[#8A8D98] absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
+                    enterKeyHint="search"
                     value={appPageSearch}
                     onChange={(e) => setAppPageSearch(e.target.value)}
                     placeholder="Cari modul, tugas, kuis, ujian, atau laporan..."
@@ -995,7 +997,7 @@ export const UploadMaterialModal: React.FC = () => {
                   />
                 </div>
 
-                <div className="max-h-44 overflow-y-auto rounded-xl border border-black/[0.08] bg-white divide-y divide-black/[0.06]">
+                <div className="max-h-44 overflow-y-auto rounded-xl border border-black/[0.12] bg-white divide-y divide-black/[0.08]">
                   {filteredAppResources.length === 0 ? (
                     <div className="py-6 px-3 text-center text-[12px] text-[#8A8D98]">
                       Tidak ada item yang ditemukan di halaman ini.

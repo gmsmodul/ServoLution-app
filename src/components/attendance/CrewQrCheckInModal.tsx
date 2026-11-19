@@ -308,15 +308,18 @@ export const CrewQrCheckInModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+      className="animate-ui-fade fixed inset-0 z-[80] bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto border border-black/[0.08] shadow-2xl"
+        className="bg-white rounded-t-[28px] sm:rounded-3xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto border border-black/[0.12] shadow-2xl animate-bottom-sheet"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="sm:hidden flex justify-center pt-2.5 pb-1">
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
+        </div>
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-black/[0.06]">
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-black/[0.08]">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-[#FEF1F5] text-[#ee2e65] flex items-center justify-center shrink-0">
               <QrCode className="w-4.5 h-4.5" />
@@ -339,10 +342,10 @@ export const CrewQrCheckInModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6 space-y-5">
           {/* Step 1: Camera Scan Only (No shareable code input) */}
           {!activeQrCheckInSessionId && (
-            <div className="rounded-2xl border border-black/[0.08] bg-[#FAFBFD] p-4 space-y-3">
+            <div className="rounded-2xl border border-black/[0.12] bg-[#FAFBFD] p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-[13px] font-semibold text-[#1C1D21] flex items-center gap-2">
                   <Camera className="w-4 h-4 text-[#ee2e65]" />
@@ -424,7 +427,7 @@ export const CrewQrCheckInModal: React.FC = () => {
           {session && !isLoadingSession && (
             <>
               {/* Session Card */}
-              <div className="rounded-2xl border border-black/[0.07] bg-[#FAFBFD] p-4 space-y-2">
+              <div className="rounded-2xl border border-black/[0.12] bg-[#FAFBFD] p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className={`inline-flex items-center gap-1.5 ${theme.bg} ${theme.text} text-[11px] font-bold px-2.5 py-0.5 rounded-full`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />

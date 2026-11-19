@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ChevronDown,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp, normalizeAttendanceClassKey } from '../../context/AppContext';
 import { CustomSelect } from '../ui/CustomSelect';
+import { InfoPopover } from '../ui/InfoPopover';
 
 interface AttendanceHistoryEntry {
   id: string;
@@ -93,29 +94,9 @@ export const AllAttendanceRecordsCard: React.FC<{ selectedDay: number }> = ({ se
   const { attendanceByClass, qrCheckIns, schedules, studentsDirectory } = useApp();
 
   const [sectionOpen, setSectionOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const infoPopoverRef = useRef<HTMLDivElement>(null);
   const [expandedUserKey, setExpandedUserKey] = useState<string | null>(null);
   const [rowsPerPage, setRowsPerPage] = useState<number>(20);
   const [page, setPage] = useState<number>(1);
-
-  useEffect(() => {
-    if (!infoOpen) return;
-    const handlePointerDown = (e: MouseEvent) => {
-      if (infoPopoverRef.current && !infoPopoverRef.current.contains(e.target as Node)) {
-        setInfoOpen(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setInfoOpen(false);
-    };
-    document.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [infoOpen]);
 
   const selectedDayPadded = String(selectedDay).padStart(2, '0');
 
@@ -312,7 +293,7 @@ export const AllAttendanceRecordsCard: React.FC<{ selectedDay: number }> = ({ se
   };
 
   return (
-    <section className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
+    <section className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
       {/* Outer Section Collapsible Header with ? Info Popover */}
       <div
         role="button"
@@ -336,36 +317,10 @@ export const AllAttendanceRecordsCard: React.FC<{ selectedDay: number }> = ({ se
           All attendance records - {totalItems}
         </span>
 
-        <div
-          className="relative flex items-center"
-          ref={infoPopoverRef}
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            aria-label="Informasi catatan kehadiran"
-            aria-expanded={infoOpen}
-            onClick={() => setInfoOpen((prev) => !prev)}
-            className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
-              infoOpen
-                ? 'bg-[#FEF1F5] border-[#ee2e65] text-[#9D113C]'
-                : 'bg-white border-black/[0.15] text-[#6E717A] hover:text-[#1C1D21] hover:border-black/[0.3]'
-            }`}
-          >
-            <span className="text-[10px] font-bold leading-none">?</span>
-          </button>
-
-          {infoOpen && (
-            <div
-              role="dialog"
-              aria-label="Informasi catatan kehadiran"
-              className="absolute left-0 top-full mt-2 z-30 w-[min(340px,calc(100vw-4rem))] bg-white rounded-2xl border border-black/[0.08] shadow-[0_14px_34px_-10px_rgba(15,23,42,0.18)] p-3.5 text-[12.5px] leading-relaxed text-[#4B4E57] animate-ui-pop select-text cursor-default"
-            >
-              Satu catatan terbaru per pengguna. Buka baris pengguna untuk seluruh riwayat kehadiran dan kelas yang tidak dihadiri pada periode aktif.
-            </div>
-          )}
-        </div>
+        <InfoPopover
+          label="Informasi catatan kehadiran"
+          content="Satu catatan terbaru per pengguna. Buka baris pengguna untuk seluruh riwayat kehadiran dan kelas yang tidak dihadiri pada periode aktif."
+        />
       </div>
 
       <AnimatePresence initial={false}>
@@ -374,13 +329,74 @@ export const AllAttendanceRecordsCard: React.FC<{ selectedDay: number }> = ({ se
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-4">
+            <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-5">
+
             {/* Table Container */}
-            <div className="rounded-2xl border border-black/[0.07] overflow-hidden bg-white">
-              <div className="overflow-x-auto">
+            <div className="rounded-2xl border border-black/[0.12] overflow-hidden bg-white">
+              {/* Mobile Card Stack (< 640px) */}
+              <div className="sm:hidden divide-y divide-black/[0.07]">
+                {pageRows.length === 0 ? (
+                  <div className="py-10 text-center text-[13px] text-[#8A8D98]">
+                    Belum ada data kehadiran tercatat.
+                  </div>
+                ) : (
+                  pageRows.map((row) => {
+                    const isExpanded = expandedUserKey === row.key;
+                    const badgeStyle = getStatusBadgeStyle(row.latestStatus);
+                    return (
+                      <div key={row.key} className="p-4 space-y-2.5">
+                        <div
+                          onClick={() => toggleUserRow(row.key)}
+                          className="flex items-start justify-between gap-2.5 cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${row.color}`}
+                            >
+                              {row.initials}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-[13.5px] font-semibold text-[#1C1D21] truncate">
+                                {row.name}
+                              </div>
+                              <div className="text-[11.5px] text-[#6E717A] truncate">
+                                {row.latestClass}
+                              </div>
+                              <div className="text-[11px] text-[#8A8D98] tabular-nums">
+                                {row.latestTime} · NIU {row.niu}
+                              </div>
+                            </div>
+                          </div>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold shrink-0 ${badgeStyle.pill}`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${badgeStyle.dot}`} />
+                            <span>{row.latestStatus}</span>
+                          </span>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="pt-2 border-t border-black/[0.06] space-y-2 text-[12px]">
+                            <div className="flex items-center justify-between bg-[#E6F9F0]/60 rounded-xl px-3 py-2">
+                              <span className="font-semibold text-[#146C43]">Riwayat Hadir</span>
+                              <span className="font-bold text-[#146C43] tabular-nums">{row.attendedHistory.length}x</span>
+                            </div>
+                            <div className="flex items-center justify-between bg-[#FEF1F5]/75 rounded-xl px-3 py-2">
+                              <span className="font-semibold text-[#9D113C]">Kelas Tidak Dihadiri</span>
+                              <span className="font-bold text-[#9D113C] tabular-nums">{row.missedClasses.length}x</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[720px]">
                   <thead>
                     <tr className="bg-[#FAFBFD] border-b border-black/[0.06] text-[11.5px] font-medium text-[#6E717A]">
@@ -447,7 +463,7 @@ export const AllAttendanceRecordsCard: React.FC<{ selectedDay: number }> = ({ se
                                     initial={{ height: 0, opacity: 0 }}
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                                    transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
                                     className="overflow-hidden"
                                   >
                                     <div className="p-4 sm:p-5 border-t border-black/[0.05] space-y-4">

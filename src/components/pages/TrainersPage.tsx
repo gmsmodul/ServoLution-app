@@ -19,6 +19,7 @@ import {
 } from '../../utils/scheduleSubjects';
 import { SplitFilterButton } from '../ui/SplitFilterButton';
 import { CustomSelect } from '../ui/CustomSelect';
+import { InfoPopover } from '../ui/InfoPopover';
 import { ACTION_BTN_PRIMARY, ACTION_BTN_SOFT_PRIMARY } from '../../constants/buttonStyles';
 
 type TrainerPageTab = 'roster' | 'feedbacks' | 'parameters';
@@ -166,10 +167,11 @@ export const TrainersPage: React.FC = () => {
               <Search className="w-4 h-4 text-[#8A8D98] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                enterKeyHint="search"
                 value={trainerSearchQuery}
                 onChange={(e) => setTrainerSearchQuery(e.target.value)}
                 placeholder="Search trainer or email..."
-                className="w-full sm:w-auto h-9 pl-9 pr-4 rounded-full border border-black/[0.09] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
+                className="w-full sm:w-auto h-9 pl-9 pr-4 rounded-full border border-black/[0.12] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
               />
             </div>
           )}
@@ -282,7 +284,7 @@ export const TrainersPage: React.FC = () => {
           </div>
 
           {filteredTrainers.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-black/[0.07] py-12 px-6 text-center space-y-2">
+            <div className="bg-white rounded-2xl border border-black/[0.12] py-12 px-6 text-center space-y-2">
               <div className="text-[15px] font-semibold text-[#1C1D21]">No trainers found</div>
               <p className="text-[12.5px] text-[#8A8D98]">
                 Try adjusting your search query, class selection, or status filter.
@@ -291,7 +293,7 @@ export const TrainersPage: React.FC = () => {
           ) : (
             <>
               {/* Mobile Unified Hairline List */}
-              <div className="md:hidden bg-white rounded-2xl border border-black/[0.07] divide-y divide-black/[0.06] overflow-hidden">
+              <div className="md:hidden bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden">
                 {filteredTrainers.map((tr) => {
                   const fbMeta = feedbackMetaByTrainer.get(tr.id);
                   const statusBadge =
@@ -356,11 +358,11 @@ export const TrainersPage: React.FC = () => {
               </div>
 
               {/* Tablet & PC Table List */}
-              <div className="hidden md:block overflow-hidden rounded-2xl border border-black/[0.07] bg-white">
+              <div className="hidden md:block overflow-hidden rounded-2xl border border-black/[0.12] bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-[#FAFBFD] border-b border-black/[0.05] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+                      <tr className="bg-[#FAFBFD] border-b border-black/[0.08] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
                         <th className="py-3.5 px-5">Trainer</th>
                         <th className="py-3.5 px-4">Class</th>
                         <th className="py-3.5 px-4">Department</th>
@@ -370,7 +372,7 @@ export const TrainersPage: React.FC = () => {
                         <th className="py-3.5 px-5 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/[0.05] text-[13px]">
+                    <tbody className="divide-y divide-black/[0.08] text-[13px]">
                       {filteredTrainers.map((tr) => {
                         const fbMeta = feedbackMetaByTrainer.get(tr.id);
                         const statusBadge =
@@ -475,13 +477,14 @@ export const TrainersPage: React.FC = () => {
       {activeTab === 'feedbacks' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="flex items-center gap-2">
               <h2 className="text-[15.5px] font-semibold text-[#1C1D21]">
                 Feedback &amp; Rating dari Servolution Crew
               </h2>
-              <p className="text-[12px] text-[#6E717A]">
-                Setiap feedback yang masuk otomatis memperbarui nilai rating trainer secara real-time.
-              </p>
+              <InfoPopover
+                label="Informasi Feedback Trainer"
+                content="Setiap feedback yang masuk otomatis memperbarui nilai rating trainer secara real-time."
+              />
             </div>
             <div className="flex items-center gap-2.5">
               <CustomSelect
@@ -511,7 +514,7 @@ export const TrainersPage: React.FC = () => {
           </div>
 
           {filteredFeedbacks.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-black/[0.07] py-12 px-6 text-center space-y-3">
+            <div className="bg-white rounded-2xl border border-black/[0.12] py-12 px-6 text-center space-y-3">
               <div className="text-[15px] font-semibold text-[#1C1D21]">
                 Belum ada feedback untuk filter ini
               </div>
@@ -524,7 +527,7 @@ export const TrainersPage: React.FC = () => {
               {filteredFeedbacks.map((rev) => (
                 <div
                   key={rev.id}
-                  className="bg-white rounded-2xl border border-black/[0.07] p-4 sm:p-5 space-y-3"
+                  className="bg-white rounded-2xl border border-black/[0.12] p-4 sm:p-5 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -578,19 +581,20 @@ export const TrainersPage: React.FC = () => {
       {/* TAB 3: Parameter Penilaian */}
       {activeTab === 'parameters' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
-            <div className="px-5 py-4 border-b border-black/[0.06] bg-[#FAFBFD] flex items-center justify-between">
-              <div>
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
+            <div className="px-5 py-4 border-b border-black/[0.08] bg-[#FAFBFD] flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <h2 className="text-[15px] font-semibold text-[#1C1D21]">
                   Daftar Parameter Penilaian Trainer
                 </h2>
-                <p className="text-[12px] text-[#6E717A]">
-                  Parameter yang aktif akan tampil sebagai tab pilihan saat Servolution Crew mengisi form feedback.
-                </p>
+                <InfoPopover
+                  label="Informasi Daftar Parameter Penilaian"
+                  content="Parameter yang aktif akan tampil sebagai tab pilihan saat Servolution Crew mengisi form feedback."
+                />
               </div>
             </div>
 
-            <div className="divide-y divide-black/[0.06]">
+            <div className="divide-y divide-black/[0.08]">
               {trainerFeedbackParameters.map((param) => (
                 <div
                   key={param.id}
@@ -645,15 +649,16 @@ export const TrainersPage: React.FC = () => {
 
           <form
             onSubmit={handleCreateParameter}
-            className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.07] p-5 space-y-4"
+            className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.12] p-5 space-y-4"
           >
-            <div>
+            <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-semibold text-[#1C1D21]">
                 Tambah Parameter Penilaian Baru
               </h3>
-              <p className="text-[12px] text-[#6E717A] mt-0.5">
-                Tambahkan aspek evaluasi baru agar dapat dipilih pada tab parameter saat mengisi feedback.
-              </p>
+              <InfoPopover
+                label="Informasi Tambah Parameter"
+                content="Tambahkan aspek evaluasi baru agar dapat dipilih pada tab parameter saat mengisi feedback."
+              />
             </div>
 
             <div className="space-y-3 text-[13px]">

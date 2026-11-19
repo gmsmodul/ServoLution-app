@@ -28,6 +28,7 @@ import {
   getRemainingScheduleLabel,
 } from '../../utils/assignmentSchedule';
 import { SplitFilterButton } from '../ui/SplitFilterButton';
+import { InfoPopover } from '../ui/InfoPopover';
 
 export const AssignmentsPage: React.FC = () => {
   const {
@@ -80,13 +81,14 @@ export const AssignmentsPage: React.FC = () => {
   return (
     <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 md:pb-6 border-b border-black/[0.05]">
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-2">
           <h1 className="text-[24px] font-semibold tracking-tight text-[#1C1D21]">
             Assignment
           </h1>
-          <p className="text-[12.5px] text-[#6E717A] mt-0.5">
-            Buat tugas dengan soal &amp; gambar, atur jadwal autostart di Overview, lalu periksa dan nilai jawaban masuk.
-          </p>
+          <InfoPopover
+            label="Informasi Assignment"
+            content="Buat tugas dengan soal & gambar, atur jadwal autostart di Overview, lalu periksa dan nilai jawaban masuk."
+          />
         </div>
 
         <div className="flex items-center justify-end gap-2.5 w-full md:w-auto">
@@ -94,10 +96,11 @@ export const AssignmentsPage: React.FC = () => {
             <Search className="w-4 h-4 text-[#8A8D98] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              enterKeyHint="search"
               value={assignmentSearch}
               onChange={(e) => setAssignmentSearch(e.target.value)}
               placeholder="Cari judul atau kelas..."
-              className="w-full sm:w-56 h-9 pl-9 pr-4 rounded-full border border-black/[0.09] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
+              className="w-full sm:w-56 h-9 pl-9 pr-4 rounded-full border border-black/[0.12] text-[13px] bg-white outline-none focus:border-[#ee2e65]"
             />
           </div>
           <button
@@ -115,8 +118,12 @@ export const AssignmentsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Status Filter Split Button */}
-      <div className="flex items-center justify-end sm:justify-start">
+      {/* Daftar & Filter Status */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-[13px] font-semibold text-[#1C1D21] tabular-nums">
+          Daftar Tugas ({assignments.length})
+        </div>
+
         <SplitFilterButton
           value={assignmentFilterStatus}
           onChange={setAssignmentFilterStatus}
@@ -134,7 +141,7 @@ export const AssignmentsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-7">
         {/* Left 7 Cols: Assignment List */}
-        <div className="md:col-span-7 bg-white rounded-2xl border border-black/[0.07] divide-y divide-black/[0.06] overflow-hidden self-start">
+        <div className="md:col-span-7 bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden self-start">
           {filteredAssignments.length === 0 ? (
             <div className="p-10 text-center space-y-2">
               <FileQuestion className="w-8 h-8 text-[#B4B6C1] mx-auto" />
@@ -292,7 +299,7 @@ export const AssignmentsPage: React.FC = () => {
                     </div>
                     <div className="w-full h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${theme.dot} rounded-full transition-all duration-300`}
+                        className={`h-full ${theme.dot} rounded-full transition-all duration-[240ms] ease-[cubic-bezier(0.23,1,0.32,1)]`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -305,8 +312,8 @@ export const AssignmentsPage: React.FC = () => {
 
         {/* Right 5 Cols: Detail, Questions Preview & Submission Review/Grading */}
         {activeAssignment && (
-          <div className="md:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-black/[0.07] space-y-4 self-start">
-            <div className="pb-3.5 border-b border-black/[0.06] space-y-2.5">
+          <div className="md:col-span-5 bg-white rounded-2xl p-5 sm:p-6 border border-black/[0.12] space-y-4 self-start">
+            <div className="pb-3.5 border-b border-black/[0.08] space-y-2.5">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A8D98]">
                   Detail &amp; Hasil Jawaban
@@ -431,12 +438,15 @@ export const AssignmentsPage: React.FC = () => {
             {/* Submissions Tracker & Review */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-[12px]">
-                <span className="font-semibold text-[#1C1D21]">
-                  Hasil Pengumpulan ({activeAssignment.submissions.length})
-                </span>
-                <span className="text-[#8A8D98] text-[11px]">
-                  Klik untuk memeriksa &amp; memberi nilai
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-[#1C1D21]">
+                    Hasil Pengumpulan ({activeAssignment.submissions.length})
+                  </span>
+                  <InfoPopover
+                    label="Informasi Hasil Pengumpulan"
+                    content="Klik tombol Periksa & Nilai atau skor di sebelah kanan untuk memeriksa jawaban dan memberi nilai peserta."
+                  />
+                </div>
               </div>
 
               <div className="rounded-xl border border-black/[0.06] divide-y divide-black/[0.05] overflow-hidden">

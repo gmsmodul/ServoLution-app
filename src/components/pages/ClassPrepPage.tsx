@@ -88,13 +88,13 @@ export const ClassPrepPage: React.FC = () => {
       </div>
 
       {/* Unified Readiness Summary Strip */}
-      <div className="rounded-2xl border border-black/[0.06] grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.06] overflow-hidden">
+      <div className="rounded-2xl border border-black/[0.12] grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.08] overflow-hidden">
         <div className="p-4 sm:p-5 bg-[#E6F9F0]">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#10B981]" />
             <span className="text-[12px] font-semibold text-[#146C43]">Ready to Teach</span>
           </div>
-          <div className="text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
+          <div className="kpi-value text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {lessonPlans.filter((p) => p.status === 'Ready').length} Modules
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-0.5">All slides &amp; worksheets uploaded</p>
@@ -104,7 +104,7 @@ export const ClassPrepPage: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
             <span className="text-[12px] font-semibold text-[#8C5811]">In Preparation</span>
           </div>
-          <div className="text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
+          <div className="kpi-value text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {lessonPlans.filter((p) => p.status !== 'Ready').length} Modules
           </div>
           <p className="text-[11.5px] text-[#7A592A] mt-0.5">Pending final checklist items</p>
@@ -114,7 +114,7 @@ export const ClassPrepPage: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-[#6C5DD3]" />
             <span className="text-[12px] font-semibold text-[#3F3B99]">Teaching Resources</span>
           </div>
-          <div className="text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
+          <div className="kpi-value text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {lessonPlans.reduce((acc, p) => acc + p.materials.length, 0)} Files
           </div>
           <p className="text-[11.5px] text-[#5854A8] mt-0.5">PDF decks, labs &amp; video guides</p>
@@ -123,7 +123,7 @@ export const ClassPrepPage: React.FC = () => {
 
       {/* 12-Col Layout: Lesson Modules List (7 Cols) | Active Module Inspector (5 Cols) */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-7">
-        <div className="md:col-span-7 bg-white rounded-2xl border border-black/[0.07] divide-y divide-black/[0.06] overflow-hidden self-start">
+        <div className="md:col-span-7 bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden self-start">
           {filteredPlans.map((plan) => {
               const theme = PASTEL_THEMES[plan.theme] || PASTEL_THEMES.periwinkle;
               const isSelected = activePlan?.id === plan.id;
@@ -161,7 +161,7 @@ export const ClassPrepPage: React.FC = () => {
                   <div className="mt-3.5 space-y-1.5">
                     <div className="w-full h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${theme.dot} rounded-full transition-all duration-300`}
+                        className={`h-full ${theme.dot} rounded-full transition-all duration-[240ms] ease-[cubic-bezier(0.23,1,0.32,1)]`}
                         style={{ width: `${plan.progress}%` }}
                       />
                     </div>

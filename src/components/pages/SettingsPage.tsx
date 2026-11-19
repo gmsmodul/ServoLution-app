@@ -26,6 +26,8 @@ import {
   resolveGradeBand,
 } from '../../data/batchDefaults';
 import { CustomSelect } from '../ui/CustomSelect';
+import { InfoPopover } from '../ui/InfoPopover';
+import { ToggleSwitch } from '../ui/ToggleSwitch';
 import { ExamAssessmentStepBuilder } from '../settings/ExamAssessmentStepBuilder';
 import {
   ACTION_BTN_DANGER_SOFT,
@@ -361,10 +363,10 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Unified 4-Column Summary Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.06] border border-black/[0.06] rounded-2xl overflow-hidden">
+      <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.08] border border-black/[0.12] rounded-2xl overflow-hidden">
         <div className="p-4 sm:p-5 bg-[#F0EFFC]">
           <span className="text-[12px] font-semibold text-[#3F3B99]">Batch &amp; Tahun Aktif</span>
-          <div className="text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums truncate">
+          <div className="kpi-value text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums truncate">
             {activeBatch.batchName} · {activeBatch.year}
           </div>
           <p className="text-[11.5px] text-[#5854A8] mt-1 tabular-nums truncate">
@@ -373,9 +375,9 @@ export const SettingsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 sm:p-5 bg-[#E6F9F0] border-l border-black/[0.06] sm:border-l-0">
+        <div className="p-4 sm:p-5 bg-[#E6F9F0] border-l border-black/[0.08] sm:border-l-0">
           <span className="text-[12px] font-semibold text-[#146C43]">Kesatuan 1 Data Batch</span>
-          <div className="text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
+          <div className="kpi-value text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {totalUnifiedRecords} Entitas
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
@@ -385,7 +387,7 @@ export const SettingsPage: React.FC = () => {
 
         <div className="p-4 sm:p-5 bg-[#FFF5E6]">
           <span className="text-[12px] font-semibold text-[#8C5811]">Minimal Kehadiran Lulus</span>
-          <div className="text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
+          <div className="kpi-value text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {gradDraft.minAttendanceRatePct}%
           </div>
           <p className="text-[11.5px] text-[#7A592A] mt-1 tabular-nums">
@@ -393,9 +395,9 @@ export const SettingsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 sm:p-5 bg-[#FEF1F5] border-l border-black/[0.06] sm:border-l-0">
+        <div className="p-4 sm:p-5 bg-[#FEF1F5] border-l border-black/[0.08] sm:border-l-0">
           <span className="text-[12px] font-semibold text-[#9D113C]">KKM Penilaian Exams</span>
-          <div className="text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
+          <div className="kpi-value text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {examDraft.passingScore} / {examDraft.scaleMax}
           </div>
           <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
@@ -437,15 +439,16 @@ export const SettingsPage: React.FC = () => {
       {activeTab === 'database' && (
         <div className="space-y-6">
           {/* Toolbar & Import/Create Controls */}
-          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 space-y-5">
+          <div className="bg-white rounded-2xl border border-black/[0.12] p-5 space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+              <div className="flex items-center gap-2">
                 <h2 className="text-[16px] font-semibold text-[#1C1D21]">
                   Penyimpanan Database per Batch &amp; Tahun
                 </h2>
-                <p className="text-[12.5px] text-[#6E717A] mt-0.5">
-                  Setiap batch menyimpan seluruh data kelas, jadwal, siswa, absensi, nilai, kriteria kelulusan, dan aturan exams menjadi 1 kesatuan data.
-                </p>
+                <InfoPopover
+                  label="Informasi Database Batch"
+                  content="Setiap batch menyimpan seluruh data kelas, jadwal, siswa, absensi, nilai, kriteria kelulusan, dan aturan exams menjadi 1 kesatuan data."
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5">
@@ -576,12 +579,108 @@ export const SettingsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Unified Batch Records Table */}
-          <div className="bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
-            <div className="overflow-x-auto">
+          {/* Unified Batch Records Table & Mobile Card Stack */}
+          <div className="bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-black/[0.08]">
+              {filteredBatches.map((batch) => {
+                const isActive = batch.id === activeBatchId;
+                const grad = isActive ? gradDraft : batch.graduationRule;
+                const exam = isActive ? examDraft : batch.examGradingRule;
+                const stCount = isActive ? studentsDirectory.length : batch.data.students.length;
+                const schCount = isActive ? schedules.length : batch.data.schedules.length;
+                const exCount = isActive ? exams.length : batch.data.exams.length;
+
+                return (
+                  <div
+                    key={batch.id}
+                    className={`p-4 space-y-3 ${isActive ? 'bg-[#FEF1F5]/45' : 'bg-white'}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                            isActive ? 'bg-[#ee2e65]' : 'bg-[#B4B6C1]'
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-[14px] text-[#1C1D21] truncate">
+                            {batch.batchName} · {batch.year}
+                          </div>
+                          <div className="text-[12px] text-[#6E717A] truncate">
+                            {batch.gmsAsal || '-'} · {batch.programEvent || '-'}
+                          </div>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[10.5px] font-bold shrink-0">
+                          Aktif
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-[12px] text-[#5A5D67] tabular-nums space-y-0.5">
+                      <div>{stCount} siswa · {schCount} jadwal · {exCount} ujian</div>
+                      <div>Min hadir {grad.minAttendanceRatePct}% · KKM {exam.passingScore}/{exam.scaleMax}</div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {isActive ? (
+                        <button type="button" disabled className={ACTION_BTN_SOFT_PRIMARY}>
+                          <Check className="w-4 h-4 shrink-0" />
+                          <span>Aktif</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => switchActiveBatch(batch.id)}
+                          className={ACTION_BTN_SOFT_PRIMARY}
+                        >
+                          <span>Aktifkan</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleExportBatchJson(batch)}
+                        className={ACTION_BTN_SECONDARY}
+                      >
+                        <Download className="w-4 h-4 shrink-0" />
+                        <span>Export</span>
+                      </button>
+                      {!isActive && batches.length > 1 && (
+                        confirmDeleteBatchId === batch.id ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              deleteBatch(batch.id);
+                              setConfirmDeleteBatchId(null);
+                            }}
+                            className={ACTION_BTN_DANGER_SOFT}
+                          >
+                            <Trash2 className="w-4 h-4 shrink-0" />
+                            <span>Hapus?</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteBatchId(batch.id)}
+                            className={ACTION_BTN_SECONDARY}
+                          >
+                            <Trash2 className="w-4 h-4 shrink-0 text-[#942922]" />
+                            <span className="text-[#942922]">Hapus</span>
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#FAFBFD] border-b border-black/[0.05] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+                  <tr className="bg-[#FAFBFD] border-b border-black/[0.08] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
                     <th className="py-3.5 px-5">Batch &amp; Tahun</th>
                     <th className="py-3.5 px-4">GMS Asal &amp; Program Event</th>
                     <th className="py-3.5 px-4">Isi 1 Paket Data</th>
@@ -590,7 +689,7 @@ export const SettingsPage: React.FC = () => {
                     <th className="py-3.5 px-5 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.05] text-[13px]">
+                <tbody className="divide-y divide-black/[0.08] text-[13px]">
                   {filteredBatches.map((batch) => {
                     const isActive = batch.id === activeBatchId;
                     const grad = isActive ? gradDraft : batch.graduationRule;
@@ -709,8 +808,8 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Snapshot Composition Matrix inside Active 1-Batch Record */}
-          <div className="bg-white rounded-2xl border border-black/[0.07] p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-black/[0.06]">
+          <div className="bg-white rounded-2xl border border-black/[0.12] p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-black/[0.08]">
               <div>
                 <h3 className="text-[15px] font-semibold text-[#1C1D21]">
                   Struktur 1 Kesatuan Data — {activeBatch.batchName} ({activeBatch.year})
@@ -724,7 +823,7 @@ export const SettingsPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 border border-black/[0.06] rounded-xl overflow-hidden divide-x divide-black/[0.05]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 border border-black/[0.08] rounded-xl overflow-hidden divide-x divide-black/[0.08]">
               {[
                 { label: 'Siswa', value: `${studentsDirectory.length} data` },
                 { label: 'Jadwal Sesi', value: `${schedules.length} sesi` },
@@ -750,15 +849,16 @@ export const SettingsPage: React.FC = () => {
           {/* Rules Form (5 Cols) */}
           <form
             onSubmit={handleSaveGraduationRule}
-            className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6 space-y-5"
+            className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.12] p-5 sm:p-6 space-y-5"
           >
-            <div className="pb-3.5 border-b border-black/[0.06]">
+            <div className="pb-3.5 border-b border-black/[0.08] flex items-center gap-2">
               <h2 className="text-[16px] font-semibold text-[#1C1D21]">
                 Aturan Kriteria Kelulusan Attendance
               </h2>
-              <p className="text-[12px] text-[#6E717A] mt-0.5">
-                Berlaku khusus untuk {activeBatch.batchName} · Tahun {activeBatch.year}
-              </p>
+              <InfoPopover
+                label="Informasi Kriteria Kelulusan"
+                content={`Aturan ini berlaku khusus untuk ${activeBatch.batchName} · Tahun ${activeBatch.year}.`}
+              />
             </div>
 
             {/* Min Attendance Rate */}
@@ -891,31 +991,24 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             {/* Combine with Exam Pass */}
-            <div className="flex items-center justify-between gap-3 py-2 border-y border-black/[0.06]">
-              <div>
-                <div className="text-[13px] font-semibold text-[#1C1D21]">
+            <div className="flex items-center justify-between gap-3 py-2 border-y border-black/[0.08]">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-semibold text-[#1C1D21]">
                   Wajib Lulus KKM Penilaian Exams
-                </div>
-                <div className="text-[11.5px] text-[#6E717A] tabular-nums">
-                  Siswa wajib mencapai nilai ≥ {examDraft.passingScore} selain lolos kehadiran
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  setGradDraft((prev) => ({ ...prev, requireExamPass: !prev.requireExamPass }))
-                }
-                className={`w-11 h-6 rounded-full transition-colors p-0.5 cursor-pointer shrink-0 ${
-                  gradDraft.requireExamPass ? 'bg-[#ee2e65]' : 'bg-black/[0.15]'
-                }`}
-                aria-label="Toggle wajib lulus KKM Exams"
-              >
-                <span
-                  className={`block w-5 h-5 rounded-full bg-white transition-transform ${
-                    gradDraft.requireExamPass ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+                </span>
+                <InfoPopover
+                  label="Informasi Wajib Lulus KKM"
+                  content={`Siswa wajib mencapai nilai ≥ ${examDraft.passingScore} selain memenuhi syarat kehadiran.`}
                 />
-              </button>
+              </div>
+              <ToggleSwitch
+                checked={gradDraft.requireExamPass}
+                onChange={(checked) =>
+                  setGradDraft((prev) => ({ ...prev, requireExamPass: checked }))
+                }
+                ariaLabel="Toggle wajib lulus KKM Exams"
+                color="primary"
+              />
             </div>
 
             {/* Notes */}
@@ -949,8 +1042,8 @@ export const SettingsPage: React.FC = () => {
           </form>
 
           {/* Live Student Eligibility Evaluation (7 Cols) */}
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.07] overflow-hidden">
-            <div className="px-5 py-4 border-b border-black/[0.06] flex flex-wrap items-center justify-between gap-2 bg-[#FAFBFD]">
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.12] overflow-hidden">
+            <div className="px-5 py-4 border-b border-black/[0.08] flex flex-wrap items-center justify-between gap-2 bg-[#FAFBFD]">
               <div>
                 <h3 className="text-[15.5px] font-semibold text-[#1C1D21]">
                   Simulasi Kelulusan Siswa Batch Aktif
@@ -964,10 +1057,51 @@ export const SettingsPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile Card Stack (< 640px) */}
+            <div className="sm:hidden divide-y divide-black/[0.08]">
+              {graduationEvaluations.length === 0 ? (
+                <div className="py-10 text-center text-[13px] text-[#8A8D98]">
+                  Belum ada data siswa pada batch ini.
+                </div>
+              ) : (
+                graduationEvaluations.map((ev) => (
+                  <div key={ev.studentId} className="p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${ev.color}`}
+                        >
+                          {ev.initials}
+                        </span>
+                        <span className="font-semibold text-[13.5px] text-[#1C1D21] truncate">
+                          {ev.name}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[11.5px] font-semibold shrink-0 ${
+                          ev.overallPassed ? 'text-[#146C43]' : 'text-[#942922]'
+                        }`}
+                      >
+                        {ev.overallPassed ? 'Memenuhi Syarat' : ev.reasons[0] || 'Belum Memenuhi'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[12px] text-[#6E717A] tabular-nums">
+                      <span>
+                        Hadir <strong className="text-[#1C1D21]">{ev.effectiveAttendanceRate}%</strong> · {ev.unexcusedAbsences} abs · {ev.lateCount} late
+                      </span>
+                      <span className="font-semibold text-[#1C1D21]">
+                        {ev.examScore} ({ev.gradeBand.grade})
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white border-b border-black/[0.05] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
+                  <tr className="bg-white border-b border-black/[0.08] text-[11px] font-semibold uppercase tracking-wider text-[#8A8D98]">
                     <th className="py-3 px-4">Siswa</th>
                     <th className="py-3 px-3">Kehadiran</th>
                     <th className="py-3 px-3">Absent / Late</th>
@@ -975,7 +1109,7 @@ export const SettingsPage: React.FC = () => {
                     <th className="py-3 px-4 text-right">Status Kelulusan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.05] text-[12.5px]">
+                <tbody className="divide-y divide-black/[0.08] text-[12.5px]">
                   {graduationEvaluations.map((ev) => (
                     <tr key={ev.studentId} className="hover:bg-[#FAFBFD] transition-colors">
                       <td className="py-3 px-4">
@@ -1038,15 +1172,16 @@ export const SettingsPage: React.FC = () => {
           {/* Exam Grading Form (7 Cols) */}
           <form
             onSubmit={handleSaveExamRule}
-            className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6 space-y-5"
+            className="lg:col-span-7 bg-white rounded-2xl border border-black/[0.12] p-5 sm:p-6 space-y-5"
           >
-            <div className="pb-3.5 border-b border-black/[0.06]">
+            <div className="pb-3.5 border-b border-black/[0.08] flex items-center gap-2">
               <h2 className="text-[16px] font-semibold text-[#1C1D21]">
                 Aturan Penilaian Exams &amp; Konversi Grade
               </h2>
-              <p className="text-[12px] text-[#6E717A] mt-0.5">
-                Tersimpan menyatu dalam {activeBatch.batchName} · Tahun {activeBatch.year}
-              </p>
+              <InfoPopover
+                label="Informasi Aturan Penilaian Exams"
+                content={`Tersimpan menyatu dalam ${activeBatch.batchName} · Tahun ${activeBatch.year}.`}
+              />
             </div>
 
             {/* KKM, Scale, Rounding */}
@@ -1170,7 +1305,7 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             {/* Remedial Policy */}
-            <div className="space-y-3 pt-2 border-t border-black/[0.06]">
+            <div className="space-y-3 pt-2 border-t border-black/[0.08]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[13px] font-semibold text-[#1C1D21]">Izinkan Ujian Remedial</div>
@@ -1178,22 +1313,14 @@ export const SettingsPage: React.FC = () => {
                     Siswa di bawah KKM dapat mengulang ujian dengan batas nilai maksimal tertentu
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setExamDraft((prev) => ({ ...prev, allowRemedial: !prev.allowRemedial }))
+                <ToggleSwitch
+                  checked={examDraft.allowRemedial}
+                  onChange={(checked) =>
+                    setExamDraft((prev) => ({ ...prev, allowRemedial: checked }))
                   }
-                  className={`w-11 h-6 rounded-full transition-colors p-0.5 cursor-pointer shrink-0 ${
-                    examDraft.allowRemedial ? 'bg-[#ee2e65]' : 'bg-black/[0.15]'
-                  }`}
-                  aria-label="Toggle remedial exams"
-                >
-                  <span
-                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
-                      examDraft.allowRemedial ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                  ariaLabel="Toggle remedial exams"
+                  color="primary"
+                />
               </div>
 
               {examDraft.allowRemedial && (
@@ -1338,17 +1465,19 @@ export const SettingsPage: React.FC = () => {
           </form>
 
           {/* Right 5 Cols: Live Grade Distribution Preview */}
-          <div className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.07] p-5 sm:p-6 space-y-5">
-            <div className="pb-3.5 border-b border-black/[0.06]">
+          <div className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.12] p-5 sm:p-6 space-y-5">
+            <div className="pb-3.5 border-b border-black/[0.08] flex items-center gap-2">
               <h3 className="text-[15.5px] font-semibold text-[#1C1D21]">
                 Distribusi Grade Siswa Batch Aktif
               </h3>
-              <p className="text-[12px] text-[#6E717A] tabular-nums mt-0.5">
-                Kalkulasi langsung terhadap {studentsDirectory.length} siswa dengan KKM {examDraft.passingScore}
-              </p>
+              <InfoPopover
+                label="Informasi Distribusi Grade Siswa"
+                content={`Kalkulasi langsung terhadap ${studentsDirectory.length} siswa dengan KKM ${examDraft.passingScore}.`}
+                align="right"
+              />
             </div>
 
-            <div className="divide-y divide-black/[0.05]">
+            <div className="divide-y divide-black/[0.08]">
               {examDraft.gradeBands.map((band) => {
                 const count = gradeDistribution[band.grade] || 0;
                 const pct =
@@ -1370,7 +1499,7 @@ export const SettingsPage: React.FC = () => {
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-[#F4F5F8] overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-300 ${
+                        className={`h-full rounded-full transition-all duration-[260ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
                           band.passed ? 'bg-[#10B981]' : 'bg-[#ee2e65]'
                         }`}
                         style={{ width: `${pct}%` }}

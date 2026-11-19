@@ -152,17 +152,17 @@ export const TakeAssignmentModal: React.FC = () => {
         ref={setSheetElement}
         {...sheetGestureProps}
         onSubmit={handleSubmit}
-        className="w-full sm:max-w-2xl bg-white rounded-t-[28px] sm:rounded-[26px] p-5 sm:p-6 space-y-4 shadow-2xl border border-black/[0.08] max-h-[92vh] overflow-y-auto animate-bottom-sheet"
+        className="w-full sm:max-w-2xl bg-white rounded-t-[28px] sm:rounded-[26px] p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] sm:p-6 space-y-4 shadow-2xl border border-black/[0.12] max-h-[92vh] overflow-y-auto animate-bottom-sheet"
       >
         <div
           data-sheet-handle="true"
           className="sm:hidden flex justify-center py-2 -mt-3 -mb-1 cursor-grab active:cursor-grabbing touch-none"
         >
-          <div className="w-10 h-1 bg-black/15 rounded-full animate-sheet-handle" />
+          <div className="w-10 h-1 bg-black/20 rounded-full animate-sheet-handle" />
         </div>
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 pb-3 border-b border-black/[0.06]">
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-black/[0.08]">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FEF1F5] text-[#9D113C] text-[11px] font-semibold">
@@ -238,7 +238,7 @@ export const TakeAssignmentModal: React.FC = () => {
               return (
                 <div
                   key={q.id}
-                  className="rounded-2xl border border-black/[0.08] bg-white p-4 space-y-3"
+                  className="rounded-2xl border border-black/[0.12] bg-white p-4 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
@@ -355,7 +355,7 @@ export const TakeAssignmentModal: React.FC = () => {
         )}
 
         {/* Footer */}
-        <div className="flex gap-2.5 pt-3 border-t border-black/[0.06]">
+        <div className="flex gap-2.5 pt-3 border-t border-black/[0.08]">
           <button
             type="button"
             onClick={animateClose}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useLayoutEffect, Suspense } from 'react';
 import {
   Download,
   ListFilter,
@@ -8,17 +8,36 @@ import {
   X,
   CornerDownLeft,
   RotateCcw,
+  Clock,
+  Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { UtilitiesUiKit } from '../uikit/UtilitiesUiKit';
-import { DataDisplayUiKit } from '../uikit/DataDisplayUiKit';
-import { DataEntryUiKit } from '../uikit/DataEntryUiKit';
-import { FeedbackUiKit } from '../uikit/FeedbackUiKit';
-import { TableUiKit } from '../uikit/TableUiKit';
-import { OtherMultimediaUiKit } from '../uikit/OtherMultimediaUiKit';
-import { AuthStateUiKit } from '../uikit/AuthStateUiKit';
-import { MobileUiKit } from '../uikit/MobileUiKit';
+import { PageTransition, getOrderedDirection } from '../ui/PageTransition';
 import { UI_KIT_CATALOG, UiKitSubSection } from '../uikit/uiKitCatalog';
+import { UiKitCategorySkeleton } from '../uikit/UiKitCategorySkeleton';
+import { UiSkeletonSearchPanel } from '../ui/UiSkeleton';
+import { UiLoader } from '../ui/UiLoader';
+import {
+  RecentSearchEntry,
+  UI_SUGGESTION_SEARCHES,
+  loadRecentSearches,
+  saveRecentSearch,
+  removeRecentSearch,
+  clearRecentSearches,
+} from '../../utils/uiSearchHistory';
+import {
+  LazyUtilitiesUiKit,
+  LazyDataDisplayUiKit,
+  LazyDataEntryUiKit,
+  LazyFeedbackUiKit,
+  LazyTableUiKit,
+  LazyOtherMultimediaUiKit,
+  LazyAuthStateUiKit,
+  LazyMobileUiKit,
+  preloadAdjacentCategories,
+  scheduleIdleUiKitPreload,
+} from '../uikit/uiKitPreload';
 
 interface SearchResultEntry {
   key: string;
@@ -29,15 +48,30 @@ interface SearchResultEntry {
   score: number;
 }
 
-export const UiKitPage: React.FC = () => {
-  const { triggerToast } = useApp();
+const FLAT_UI_ORDER = UI_KIT_CATALOG.flatMap((g) =>
+  g.items.map((item) => `${g.id}::${item.label}`)
+);
 
-  // Default to the first item ('Grid' in 'utilities') so only the selected sidebar item renders
-  const [uiCategory, setUiCategory] = useState('utilities');
-  const [uiSubJump, setUiSubJump] = useState('Grid');
+export const UiKitPage: React.FC = () => {
+  const {
+    uiCategory,
+    prevUiCategory,
+    uiSubJump,
+    prevUiSubJump,
+    uiTargetSectionId,
+    selectUiNode,
+    clearUiTargetSection,
+    uiSearchFocusSeq,
+    triggerToast,
+  } = useApp();
+
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>(() =>
+    loadRecentSearches()
+  );
 
   const sidebarScrollRef = useRef<HTMLDivElement>(null);
   const sidebarListRef = useRef<HTMLDivElement>(null);
@@ -47,7 +81,6 @@ export const UiKitPage: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchWrapperRef = useRef<HTMLDivElement>(null);
 
-  // Flat ordered index for Previous / Next navigation across all UI Kit items
   const flatItems = useMemo(
     () =>
       UI_KIT_CATALOG.flatMap((g) =>
@@ -59,6 +92,42 @@ export const UiKitPage: React.FC = () => {
   const currentIdx = flatItems.findIndex(
     (item) => item.groupId === uiCategory && item.sub === uiSubJump
   );
+
+  const itemDirection = getOrderedDirection(
+    `${prevUiCategory}::${prevUiSubJump}`,
+    `${uiCategory}::${uiSubJump}`,
+    FLAT_UI_ORDER
+  );
+
+  // Sync focus trigger from top Header search icon
+  useEffect(() => {
+    if (uiSearchFocusSeq > 0) {
+      searchInputRef.current?.focus();
+      setSearchDropdownOpen(true);
+    }
+  }, [uiSearchFocusSeq]);
+
+  // Preload adjacent UI KIT chunks immediately + remaining chunks during browser idle
+  useEffect(() => {
+    preloadAdjacentCategories(uiCategory);
+    scheduleIdleUiKitPreload();
+  }, [uiCategory]);
+
+  // Smoothly scroll to targeted section when triggered from Header/Mobile search or updates
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      if (uiTargetSectionId) {
+        const el = document.getElementById(uiTargetSectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        clearUiTargetSection();
+      } else {
+        canvasTopRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 80);
+    return () => window.clearTimeout(id);
+  }, [uiCategory, uiSubJump, uiTargetSectionId, clearUiTargetSection]);
 
   // Keyboard shortcut: '/' focuses search, 'Escape' closes dropdown
   useEffect(() => {
@@ -81,7 +150,6 @@ export const UiKitPage: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // Close search dropdown when clicking outside
   useEffect(() => {
     const onPointerDown = (e: MouseEvent) => {
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
@@ -93,6 +161,26 @@ export const UiKitPage: React.FC = () => {
   }, []);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  // Brief shimmer skeleton feedback while typing a search query
+  useEffect(() => {
+    if (!normalizedQuery) {
+      setIsSearchLoading(false);
+      return;
+    }
+    setIsSearchLoading(true);
+    const timer = window.setTimeout(() => {
+      setIsSearchLoading(false);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [normalizedQuery]);
+
+  // Keep recent searches synced when dropdown opens (e.g. if updated from mobile sheet)
+  useEffect(() => {
+    if (searchDropdownOpen) {
+      setRecentSearches(loadRecentSearches());
+    }
+  }, [searchDropdownOpen]);
 
   useLayoutEffect(() => {
     const updateSidebarIndicator = () => {
@@ -120,16 +208,20 @@ export const UiKitPage: React.FC = () => {
     return () => ro.disconnect();
   }, [uiCategory, uiSubJump, normalizedQuery, mobileTocOpen]);
 
-  // Filter Left Directory Sidebar & surface matched sub-sections
+  // When search is empty, list the active category cleanly (categories live in main Sidebar);
+  // when searching, search across all 12 categories.
   const filteredCatalog = useMemo(() => {
     if (!normalizedQuery) {
-      return UI_KIT_CATALOG.map((g) => ({
-        ...g,
-        matchedItems: g.items.map((item) => ({
-          item,
-          matchedSections: [] as UiKitSubSection[],
-        })),
-      }));
+      const currentGroup = UI_KIT_CATALOG.find((g) => g.id === uiCategory) || UI_KIT_CATALOG[0];
+      return [
+        {
+          ...currentGroup,
+          matchedItems: currentGroup.items.map((item) => ({
+            item,
+            matchedSections: [] as UiKitSubSection[],
+          })),
+        },
+      ];
     }
 
     return UI_KIT_CATALOG.map((group) => {
@@ -156,9 +248,8 @@ export const UiKitPage: React.FC = () => {
 
       return { ...group, matchedItems };
     }).filter((g) => g.matchedItems.length > 0);
-  }, [normalizedQuery]);
+  }, [normalizedQuery, uiCategory]);
 
-  // Flat ranked quick-jump results for Search Dropdown
   const quickSearchResults = useMemo<SearchResultEntry[]>(() => {
     if (!normalizedQuery) return [];
 
@@ -200,20 +291,26 @@ export const UiKitPage: React.FC = () => {
     return results.sort((a, b) => b.score - a.score).slice(0, 14);
   }, [normalizedQuery]);
 
-  const handleSelectMultimediaNode = (groupId: string, subLabel: string, targetSectionId?: string) => {
-    setUiCategory(groupId);
-    setUiSubJump(subLabel);
+  const handleSelectMultimediaNode = (
+    groupId: string,
+    subLabel: string,
+    targetSectionId?: string,
+    recordQuery?: { query: string; groupLabel?: string; sectionTitle?: string }
+  ) => {
+    if (recordQuery?.query) {
+      setRecentSearches(
+        saveRecentSearch({
+          query: recordQuery.query,
+          groupId,
+          groupLabel: recordQuery.groupLabel,
+          itemLabel: subLabel,
+          sectionId: targetSectionId,
+          sectionTitle: recordQuery.sectionTitle,
+        })
+      );
+    }
+    selectUiNode(groupId, subLabel, targetSectionId);
     setSearchDropdownOpen(false);
-    setTimeout(() => {
-      if (targetSectionId) {
-        const el = document.getElementById(targetSectionId);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          return;
-        }
-      }
-      canvasTopRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 60);
   };
 
   const handleStep = (delta: -1 | 1) => {
@@ -231,25 +328,41 @@ export const UiKitPage: React.FC = () => {
     }, 250);
   };
 
-  const activeGroup = UI_KIT_CATALOG.find((g) => g.id === uiCategory);
+  const activeGroup = UI_KIT_CATALOG.find((g) => g.id === uiCategory) || UI_KIT_CATALOG[0];
 
   return (
     <div className="ui-kit-root flex-1 min-h-0 flex flex-col overflow-y-auto md:overflow-hidden p-5 sm:p-7 gap-5 bg-white">
       {/* Header Bar with Integrated UI Element Search */}
-      <div className="shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+      <div className="shrink-0 flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-200">
         <div className="hidden md:block">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#ee2e65] mb-0.5">
+            {activeGroup.categoryTitle}
+          </div>
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900">
-            UI Design System
+            {activeGroup.label}
           </h1>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 no-print">
           {/* Quick Search Bar with Live Dropdown */}
           <div ref={searchWrapperRef} className="relative w-full sm:w-72 lg:w-80">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {isSearchLoading ? (
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                <UiLoader
+                  variant="spinner-arc"
+                  size="sm"
+                  color="#ee2e65"
+                  trackColor="#FDE0E9"
+                  label="Mencari"
+                />
+              </span>
+            ) : (
+              <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            )}
             <input
               ref={searchInputRef}
               type="text"
+              enterKeyHint="search"
               value={searchQuery}
               onFocus={() => setSearchDropdownOpen(true)}
               onChange={(e) => {
@@ -257,15 +370,19 @@ export const UiKitPage: React.FC = () => {
                 setSearchDropdownOpen(true);
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && quickSearchResults.length > 0) {
+                if (e.key === 'Enter' && quickSearchResults.length > 0 && !isSearchLoading) {
                   e.preventDefault();
                   const top = quickSearchResults[0];
-                  handleSelectMultimediaNode(top.groupId, top.itemLabel, top.section?.id);
+                  handleSelectMultimediaNode(top.groupId, top.itemLabel, top.section?.id, {
+                    query: searchQuery.trim() || (top.section ? top.section.title : top.itemLabel),
+                    groupLabel: top.groupLabel,
+                    sectionTitle: top.section?.title,
+                  });
                 }
               }}
               placeholder="Cari elemen UI..."
               aria-label="Cari elemen UI Design System"
-              className="w-full pl-9 pr-12 py-2 text-sm bg-gray-50/70 border border-gray-200/90 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:border-primary-500 transition-colors"
+              className="w-full pl-9 pr-12 py-2 text-base sm:text-sm bg-gray-50/70 border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:bg-white focus:border-primary-500 transition-colors"
             />
             {searchQuery ? (
               <button
@@ -275,31 +392,161 @@ export const UiKitPage: React.FC = () => {
                   searchInputRef.current?.focus();
                 }}
                 aria-label="Hapus pencarian"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono font-medium text-gray-400 bg-gray-50 border border-gray-200 rounded absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono font-medium text-gray-500 bg-gray-50 border border-gray-300 rounded absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
                 /
               </kbd>
             )}
 
-            {/* Quick-Jump Search Results Popover */}
-            {searchDropdownOpen && normalizedQuery && (
-              <div className="animate-ui-pop absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-sm border border-gray-200/90 rounded-xl shadow-[0_16px_36px_-10px_rgba(15,23,42,0.16)] z-40 overflow-hidden max-h-80 overflow-y-auto custom-sidebar-scrollbar">
-                {quickSearchResults.length === 0 ? (
-                  <div className="p-4 text-center space-y-1.5">
-                    <p className="text-xs font-medium text-gray-700">
-                      Elemen &ldquo;{searchQuery}&rdquo; tidak ditemukan.
-                    </p>
-                    <p className="text-[11px] text-gray-400">
-                      Coba kata kunci lain seperti spinner, skeleton, progress bar, modal, atau button loader.
-                    </p>
+            {/* Quick-Jump Search Results, Recent Search & Suggestion Search Popover */}
+            {searchDropdownOpen && (
+              <div className="animate-ui-pop absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-sm border border-gray-300 rounded-xl shadow-[0_16px_36px_-10px_rgba(15,23,42,0.16)] z-40 overflow-hidden max-h-96 overflow-y-auto custom-sidebar-scrollbar">
+                {!normalizedQuery ? (
+                  <div className="p-2.5 space-y-3">
+                    {/* Recent Searches */}
+                    <div className="space-y-1.5">
+                      <div className="px-1.5 flex items-center justify-between text-[11px] font-semibold text-gray-500">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-gray-400" />
+                          <span>Pencarian Terakhir</span>
+                        </span>
+                        {recentSearches.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setRecentSearches(clearRecentSearches())}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-[#ee2e65] transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Hapus</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {recentSearches.length === 0 ? (
+                        <div className="px-2.5 py-2 rounded-lg bg-gray-50/80 border border-dashed border-gray-200 text-[11px] text-gray-500">
+                          Belum ada riwayat pencarian. Pilih saran di bawah atau ketik nama komponen.
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {recentSearches.map((rec) => (
+                            <div
+                              key={rec.id}
+                              className="group flex items-center justify-between gap-1.5 rounded-lg hover:bg-primary-50/60 transition-colors pr-1.5"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (rec.groupId && rec.itemLabel) {
+                                    handleSelectMultimediaNode(
+                                      rec.groupId,
+                                      rec.itemLabel,
+                                      rec.sectionId,
+                                      {
+                                        query: rec.query,
+                                        groupLabel: rec.groupLabel,
+                                        sectionTitle: rec.sectionTitle,
+                                      }
+                                    );
+                                  } else {
+                                    setSearchQuery(rec.query);
+                                  }
+                                }}
+                                className="flex-1 min-w-0 px-2.5 py-1.5 text-left flex items-center gap-2 cursor-pointer"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#ee2e65] shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-xs font-medium text-gray-800 truncate">
+                                    {rec.query}
+                                  </div>
+                                  {(rec.groupLabel || rec.itemLabel) && (
+                                    <div className="text-[10.5px] text-gray-500 truncate">
+                                      {[rec.groupLabel, rec.itemLabel, rec.sectionTitle]
+                                        .filter(Boolean)
+                                        .join(' / ')}
+                                    </div>
+                                  )}
+                                </div>
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Hapus riwayat ${rec.query}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRecentSearches(removeRecentSearch(rec.id));
+                                }}
+                                className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer shrink-0"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Suggestion Searches */}
+                    <div className="space-y-1.5 pt-2 border-t border-gray-200/80">
+                      <div className="px-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+                        <Sparkles className="w-3 h-3 text-[#ee2e65]" />
+                        <span>Saran Pencarian</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 px-1">
+                        {UI_SUGGESTION_SEARCHES.map((sug) => (
+                          <button
+                            key={sug.id}
+                            type="button"
+                            onClick={() =>
+                              handleSelectMultimediaNode(
+                                sug.groupId,
+                                sug.itemLabel,
+                                sug.sectionId,
+                                {
+                                  query: sug.label,
+                                  groupLabel: sug.hint.split(' · ')[0],
+                                }
+                              )
+                            }
+                            title={sug.hint}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-gray-200 bg-gray-50/80 hover:bg-[#FEF1F5] hover:border-[#FBC2D4] hover:text-[#9D113C] text-[11.5px] font-medium text-gray-700 transition-colors cursor-pointer"
+                          >
+                            <span>{sug.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : isSearchLoading ? (
+                  <UiSkeletonSearchPanel mode="results" rows={4} />
+                ) : quickSearchResults.length === 0 ? (
+                  <div className="p-3.5 space-y-3">
+                    <div className="text-center space-y-1">
+                      <p className="text-xs font-medium text-gray-700">
+                        Elemen &ldquo;{searchQuery}&rdquo; tidak ditemukan.
+                      </p>
+                      <p className="text-[11px] text-gray-500">
+                        Coba salah satu saran populer di bawah ini:
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-1.5">
+                      {UI_SUGGESTION_SEARCHES.slice(0, 4).map((sug) => (
+                        <button
+                          key={sug.id}
+                          type="button"
+                          onClick={() => setSearchQuery(sug.query)}
+                          className="px-2.5 py-1 rounded-full border border-[#FBC2D4] bg-[#FEF1F5] text-[11px] font-medium text-[#9D113C] hover:brightness-95 cursor-pointer"
+                        >
+                          {sug.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <div className="py-1.5 divide-y divide-gray-100">
-                    <div className="px-3 py-1.5 flex items-center justify-between text-[11px] text-gray-400 font-medium bg-gray-50/70">
+                  <div className="py-1.5 divide-y divide-gray-200 animate-ui-fade">
+                    <div className="px-3 py-1.5 flex items-center justify-between text-[11px] text-gray-500 font-medium bg-gray-50/70">
                       <span>{quickSearchResults.length} hasil cocok</span>
                       <span className="inline-flex items-center gap-1">
                         <CornerDownLeft className="w-3 h-3" /> Enter untuk buka
@@ -309,8 +556,14 @@ export const UiKitPage: React.FC = () => {
                       <button
                         key={res.key}
                         type="button"
-                        onClick={() => handleSelectMultimediaNode(res.groupId, res.itemLabel, res.section?.id)}
-                        className={`w-full px-3.5 py-2 text-left flex items-center justify-between gap-2 hover:bg-primary-50/60 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer ${
+                        onClick={() =>
+                          handleSelectMultimediaNode(res.groupId, res.itemLabel, res.section?.id, {
+                            query: searchQuery.trim() || (res.section ? res.section.title : res.itemLabel),
+                            groupLabel: res.groupLabel,
+                            sectionTitle: res.section?.title,
+                          })
+                        }
+                        className={`w-full px-3.5 py-2 text-left flex items-center justify-between gap-2 hover:bg-primary-50/60 transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer ${
                           idx === 0 ? 'bg-gray-50/50' : ''
                         }`}
                       >
@@ -335,9 +588,9 @@ export const UiKitPage: React.FC = () => {
 
           <button
             onClick={handleExportUiKitPdf}
-            className="group self-end sm:self-auto flex items-center justify-center gap-1.5 sm:gap-2 bg-[#ee2e65] hover:bg-[#d82256] text-white text-sm font-medium px-3.5 sm:px-4 py-2 rounded-full transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            className="touch-target-44 group self-end sm:self-auto flex items-center justify-center gap-1.5 sm:gap-2 bg-[#ee2e65] hover:bg-[#d82256] text-white text-sm font-medium px-3.5 sm:px-4 h-9 rounded-full transition-colors cursor-pointer whitespace-nowrap shrink-0"
           >
-            <Download className="w-4 h-4 shrink-0 transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0.5" />
+            <Download className="w-4 h-4 shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-y-0.5" />
             <span className="sm:hidden">Export</span>
             <span className="hidden sm:inline">Export PDF</span>
           </button>
@@ -349,31 +602,31 @@ export const UiKitPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setMobileTocOpen(!mobileTocOpen)}
-          className="w-full flex items-center justify-between px-4 py-2.5 bg-white rounded-lg border border-gray-200 text-sm font-medium text-gray-800 cursor-pointer shadow-2xs"
+          className="touch-target-44 w-full flex items-center justify-between px-4 py-2.5 bg-white rounded-lg border border-gray-300 text-sm font-medium text-gray-800 cursor-pointer shadow-2xs"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <ListFilter className="w-4 h-4 text-primary-600 shrink-0" />
-            <span className="truncate">{uiSubJump}</span>
+            <ListFilter className="w-4 h-4 text-[#ee2e65] shrink-0" />
+            <span className="truncate">{activeGroup.label} · {uiSubJump}</span>
           </div>
-          <span className="text-xs font-semibold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md shrink-0">
+          <span className="text-xs font-semibold text-[#9D113C] bg-[#FEF1F5] px-2 py-0.5 rounded-md shrink-0">
             {mobileTocOpen ? 'Tutup' : 'Pilih'}
           </span>
         </button>
       </div>
 
-      {/* 2-Column Layout: Independent Scroll Containers on Left & Right Panels */}
+      {/* 2-Column Layout: Active Category Directory on Left + Animated Showcase Canvas on Right */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 flex-1 min-h-0 items-stretch">
         {/* Left Directory Sidebar */}
         <div
           ref={sidebarScrollRef}
           className={`${
             mobileTocOpen ? 'block animate-ui-slide-down' : 'hidden md:block'
-          } md:col-span-4 lg:col-span-3 xl:col-span-3 bg-white rounded-xl p-4 border border-gray-200/80 md:h-full max-h-[65vh] md:max-h-none overflow-y-auto custom-sidebar-scrollbar no-print`}
+          } md:col-span-4 lg:col-span-3 xl:col-span-3 bg-white rounded-xl p-4 border border-gray-300/90 md:h-full max-h-[65vh] md:max-h-none overflow-y-auto custom-sidebar-scrollbar no-print`}
         >
           {normalizedQuery && (
-            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-200">
               <span className="text-xs font-medium text-gray-500">Hasil Filter</span>
-              <span className="text-[11px] font-semibold text-primary-600 tabular-nums">
+              <span className="text-[11px] font-semibold text-[#ee2e65] tabular-nums">
                 {filteredCatalog.reduce((acc, g) => acc + g.matchedItems.length, 0)} cocok
               </span>
             </div>
@@ -387,7 +640,7 @@ export const UiKitPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-xs font-medium text-gray-700 whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300 bg-gray-50 hover:bg-gray-100 text-xs font-medium text-gray-700 whitespace-nowrap cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:hidden shrink-0" />
                 <span className="sm:hidden">Reset</span>
@@ -398,7 +651,7 @@ export const UiKitPage: React.FC = () => {
             <div ref={sidebarListRef} className="relative space-y-5">
               <span
                 aria-hidden="true"
-                className={`pointer-events-none absolute left-0 right-0 top-0 rounded-lg bg-primary-50/85 shadow-[inset_2px_0_0_#ee2e65] transition-[transform,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`pointer-events-none absolute left-0 right-0 top-0 rounded-lg bg-[#FEF1F5]/90 shadow-[inset_2px_0_0_#ee2e65] transition-[transform,height,opacity] duration-[220ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
                   sidebarIndicator.ready ? 'opacity-100' : 'opacity-0'
                 }`}
                 style={{
@@ -415,10 +668,13 @@ export const UiKitPage: React.FC = () => {
                       onClick={() =>
                         handleSelectMultimediaNode(group.id, group.matchedItems[0].item.label)
                       }
-                      className="w-full flex items-center justify-between px-2 text-[11px] font-semibold tracking-wide text-gray-400 hover:text-gray-800 hover:translate-x-0.5 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] text-left cursor-pointer select-none"
+                      className="w-full flex items-center justify-between px-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-800 transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] text-left cursor-pointer select-none"
                     >
-                      <span className={`transition-colors duration-200 ${isGroupActive ? 'text-primary-600' : ''}`}>
-                        {group.label}
+                      <span className={`transition-colors duration-200 ${isGroupActive ? 'text-[#ee2e65]' : ''}`}>
+                        {group.categoryTitle}
+                      </span>
+                      <span className="text-[10.5px] font-semibold text-gray-500 tabular-nums">
+                        {group.matchedItems.length}
                       </span>
                     </button>
 
@@ -440,21 +696,21 @@ export const UiKitPage: React.FC = () => {
                                   setMobileTocOpen(false);
                                 }
                               }}
-                              className={`w-full text-left text-[13px] leading-relaxed transition-all duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer py-1.5 px-2.5 rounded-lg flex items-center justify-between ${
+                              className={`w-full text-left text-[13px] leading-relaxed font-semibold transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer py-1.5 px-2.5 rounded-lg flex items-center justify-between ${
                                 isSubActive
-                                  ? `text-primary-600 font-semibold translate-x-0.5 ${
+                                  ? `text-[#9D113C] ${
                                       sidebarIndicator.ready
                                         ? ''
-                                        : 'bg-primary-50/80 shadow-[inset_2px_0_0_#ee2e65]'
+                                        : 'bg-[#FEF1F5]/90 shadow-[inset_2px_0_0_#ee2e65]'
                                     }`
-                                  : 'text-gray-600 hover:text-gray-950 hover:bg-gray-50/80 hover:translate-x-0.5 font-medium'
+                                  : 'text-gray-600 hover:text-gray-950 hover:bg-gray-50/80'
                               }`}
                             >
                               <span>{item.label}</span>
                             </button>
 
                             {normalizedQuery && matchedSections.length > 0 && (
-                              <div className="pl-3 flex flex-col space-y-0.5 border-l border-primary-100 ml-2.5 animate-ui-slide-down">
+                              <div className="pl-3 flex flex-col space-y-0.5 border-l border-[#FBC2D4] ml-2.5 animate-ui-slide-down">
                                 {matchedSections.map((sec) => (
                                   <button
                                     key={sec.id}
@@ -465,7 +721,7 @@ export const UiKitPage: React.FC = () => {
                                         setMobileTocOpen(false);
                                       }
                                     }}
-                                    className="text-left text-xs text-gray-500 hover:text-primary-600 hover:translate-x-0.5 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] py-0.5 px-1.5 rounded hover:bg-primary-50/50 cursor-pointer truncate"
+                                    className="text-left text-xs text-gray-500 hover:text-[#ee2e65] transition-colors duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] py-0.5 px-1.5 rounded hover:bg-[#FEF1F5]/60 cursor-pointer truncate"
                                   >
                                     {sec.title}
                                   </button>
@@ -483,16 +739,16 @@ export const UiKitPage: React.FC = () => {
           )}
         </div>
 
-        {/* Right Showcase Canvas (Independent Scrollbar + Renders ONLY the selected sidebar item) */}
+        {/* Right Showcase Canvas with Responsive PageTransition Motion */}
         <div
           ref={canvasTopRef}
-          className="md:col-span-8 lg:col-span-9 xl:col-span-9 md:h-full md:overflow-y-auto custom-sidebar-scrollbar md:pr-2 space-y-5 min-w-0 pb-4"
+          className="md:col-span-8 lg:col-span-9 xl:col-span-9 md:h-full md:overflow-y-auto custom-sidebar-scrollbar md:pr-2 space-y-5 min-w-0 pb-[calc(1.75rem+env(safe-area-inset-bottom,0px))] md:pb-4"
         >
           {/* Minimalist Unboxed Breadcrumb & Prev/Next Controls */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-gray-100 no-print">
-            <div className="text-xs text-gray-500 flex items-center gap-2">
-              <span>{activeGroup?.label}</span>
-              <span className="text-gray-300">/</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-gray-200 no-print">
+            <div className="text-xs text-gray-600 flex items-center gap-2">
+              <span>{activeGroup.label}</span>
+              <span className="text-gray-500">/</span>
               <span className="text-gray-900 font-semibold">{uiSubJump}</span>
             </div>
 
@@ -501,9 +757,9 @@ export const UiKitPage: React.FC = () => {
                 type="button"
                 disabled={currentIdx <= 0}
                 onClick={() => handleStep(-1)}
-                className="group px-2.5 py-1 rounded-lg border border-gray-200/90 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer font-medium transition-all duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] whitespace-nowrap"
+                className="group px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer font-medium transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] whitespace-nowrap"
               >
-                <ChevronLeft className="w-3.5 h-3.5 shrink-0 transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-x-0.5" />
+                <ChevronLeft className="w-3.5 h-3.5 shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:-translate-x-0.5" />
                 <span className="sm:hidden">Prev</span>
                 <span className="hidden sm:inline">Sebelumnya</span>
               </button>
@@ -511,30 +767,37 @@ export const UiKitPage: React.FC = () => {
                 type="button"
                 disabled={currentIdx >= flatItems.length - 1}
                 onClick={() => handleStep(1)}
-                className="group px-2.5 py-1 rounded-lg border border-gray-200/90 bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer font-medium transition-all duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] whitespace-nowrap"
+                className="group px-3 py-1.5 rounded-full border border-gray-300 bg-white text-gray-700 hover:text-gray-900 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer font-medium transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] whitespace-nowrap"
               >
                 <span className="sm:hidden">Next</span>
                 <span className="hidden sm:inline">Berikutnya</span>
-                <ChevronRight className="w-3.5 h-3.5 shrink-0 transition-transform duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5" />
+                <ChevronRight className="w-3.5 h-3.5 shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-0.5" />
               </button>
             </div>
           </div>
 
-          {/* Render ONLY the category + item selected in sidebar with keyed page transition */}
-          <div key={`${uiCategory}-${uiSubJump}`} className="animate-ui-page">
-            {uiCategory === 'utilities' && <UtilitiesUiKit activeSubJump={uiSubJump} />}
-            {uiCategory === 'datadisplay' && <DataDisplayUiKit activeSubJump={uiSubJump} />}
-            {uiCategory === 'dataentry' && <DataEntryUiKit activeSubJump={uiSubJump} />}
-            {uiCategory === 'feedback' && <FeedbackUiKit activeSubJump={uiSubJump} />}
-            {uiCategory === 'tables' && <TableUiKit activeSubJump={uiSubJump} />}
-            {['charts', 'maps', 'navigation', 'behavioral', 'layout'].includes(uiCategory) && (
-              <OtherMultimediaUiKit activeSubJump={uiSubJump} category={uiCategory as any} />
-            )}
-            {uiCategory === 'authstate' && <AuthStateUiKit activeSubJump={uiSubJump} />}
-            {uiCategory === 'mobilekit' && <MobileUiKit activeSubJump={uiSubJump} />}
-          </div>
+          {/* Render active category + item inside directional PageTransition with layout-matched skeleton fallback */}
+          <PageTransition
+            transitionKey={`${uiCategory}-${uiSubJump}`}
+            directionOverride={itemDirection}
+            scrollResetOnChange={false}
+          >
+            <Suspense fallback={<UiKitCategorySkeleton />}>
+              {uiCategory === 'utilities' && <LazyUtilitiesUiKit activeSubJump={uiSubJump} />}
+              {uiCategory === 'datadisplay' && <LazyDataDisplayUiKit activeSubJump={uiSubJump} />}
+              {uiCategory === 'dataentry' && <LazyDataEntryUiKit activeSubJump={uiSubJump} />}
+              {uiCategory === 'feedback' && <LazyFeedbackUiKit activeSubJump={uiSubJump} />}
+              {uiCategory === 'tables' && <LazyTableUiKit activeSubJump={uiSubJump} />}
+              {['charts', 'maps', 'navigation', 'behavioral', 'layout'].includes(uiCategory) && (
+                <LazyOtherMultimediaUiKit activeSubJump={uiSubJump} category={uiCategory as any} />
+              )}
+              {uiCategory === 'authstate' && <LazyAuthStateUiKit activeSubJump={uiSubJump} />}
+              {uiCategory === 'mobilekit' && <LazyMobileUiKit activeSubJump={uiSubJump} />}
+            </Suspense>
+          </PageTransition>
         </div>
       </div>
     </div>
   );
 };
+
