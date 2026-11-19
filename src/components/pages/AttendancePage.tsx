@@ -128,6 +128,14 @@ export const AttendancePage: React.FC = () => {
   const totalCount = attCount + absCount + excCount;
   const denom = Math.max(1, totalCount);
 
+  const attPct = totalCount > 0 ? Math.round((attCount / totalCount) * 100) : 0;
+  const absPct = totalCount > 0 ? Math.round((absCount / totalCount) * 100) : 0;
+  const excPct = totalCount > 0 ? Math.round((excCount / totalCount) * 100) : 0;
+
+  const lateCount = attList.filter((st) => st.attendanceStatus === 'Late').length;
+  const onTimeCount = Math.max(0, attCount - lateCount);
+  const qrCheckInCount = attList.filter((st) => st.checkedInVia === 'QR').length;
+
   const attBars = Math.round((attCount / denom) * 14);
   const absBars = Math.round((absCount / denom) * 14);
   const excBars = Math.round((excCount / denom) * 14);
@@ -196,7 +204,7 @@ export const AttendancePage: React.FC = () => {
     () => [
       {
         key: 'attendance' as const,
-        title: 'Attendance',
+        title: 'Hadir',
         icon: Check,
         iconColor: 'text-[#10B981]',
         headerBg: 'bg-[#E6F9F0]/65',
@@ -209,7 +217,7 @@ export const AttendancePage: React.FC = () => {
       },
       {
         key: 'absences' as const,
-        title: 'Absences',
+        title: 'Tidak Hadir',
         icon: X,
         iconColor: 'text-[#D97706]',
         headerBg: 'bg-[#FFF5E6]/75',
@@ -222,7 +230,7 @@ export const AttendancePage: React.FC = () => {
       },
       {
         key: 'excuse' as const,
-        title: 'Excuse',
+        title: 'Izin',
         icon: FileText,
         iconColor: 'text-[#ee2e65]',
         headerBg: 'bg-[#FEF1F5]/75',
@@ -428,19 +436,30 @@ export const AttendancePage: React.FC = () => {
 
           {/* Unified Segmented Progress Summary Block */}
           <div className="rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden">
-            <div className="p-4 bg-[#E6F9F0] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#10B981]">
+            <div className="p-4 bg-[#E6F9F0] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#10B981] shrink-0">
                   <Check className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-[14px] font-bold text-[#1C1D21] tabular-nums">
-                    {attCount}/{totalCount}
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5 text-[14px] font-bold text-[#1C1D21] tabular-nums">
+                    <span>
+                      {attCount}/{totalCount}
+                    </span>
+                    <span className="text-[11.5px] font-semibold text-[#146C43]">
+                      {totalCount > 0 ? `(${attPct}%)` : '—'}
+                    </span>
                   </div>
-                  <div className="text-[11.5px] font-medium text-[#146C43]">Attendance</div>
+                  <div className="text-[11.5px] font-medium text-[#146C43] truncate tabular-nums">
+                    {totalCount === 0
+                      ? 'Hadir · Belum ada data'
+                      : `Hadir · ${onTimeCount} tepat waktu · ${lateCount} terlambat${
+                          qrCheckInCount > 0 ? ` · ${qrCheckInCount} QR` : ''
+                        }`}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-[3px]">
+              <div className="flex items-center gap-[3px] shrink-0">
                 {Array.from({ length: 14 }).map((_, i) => (
                   <span
                     key={i}
@@ -450,19 +469,28 @@ export const AttendancePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-[#FFF5E6] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#D97706]">
+            <div className="p-4 bg-[#FFF5E6] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#D97706] shrink-0">
                   <X className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-[14px] font-bold text-[#1C1D21] tabular-nums">
-                    {absCount}/{totalCount}
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5 text-[14px] font-bold text-[#1C1D21] tabular-nums">
+                    <span>
+                      {absCount}/{totalCount}
+                    </span>
+                    <span className="text-[11.5px] font-semibold text-[#8C5811]">
+                      {totalCount > 0 ? `(${absPct}%)` : '—'}
+                    </span>
                   </div>
-                  <div className="text-[11.5px] font-medium text-[#8C5811]">Absences</div>
+                  <div className="text-[11.5px] font-medium text-[#8C5811] truncate tabular-nums">
+                    {absCount === 0
+                      ? 'Tidak Hadir · Nihil absen'
+                      : `Tidak Hadir · ${absCount} perlu tindak lanjut`}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-[3px]">
+              <div className="flex items-center gap-[3px] shrink-0">
                 {Array.from({ length: 14 }).map((_, i) => (
                   <span
                     key={i}
@@ -472,19 +500,28 @@ export const AttendancePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-[#FEF1F5] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#ee2e65]">
+            <div className="p-4 bg-[#FEF1F5] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#ee2e65] shrink-0">
                   <FileText className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-[14px] font-bold text-[#1C1D21] tabular-nums">
-                    {excCount}/{totalCount}
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-1.5 text-[14px] font-bold text-[#1C1D21] tabular-nums">
+                    <span>
+                      {excCount}/{totalCount}
+                    </span>
+                    <span className="text-[11.5px] font-semibold text-[#9D113C]">
+                      {totalCount > 0 ? `(${excPct}%)` : '—'}
+                    </span>
                   </div>
-                  <div className="text-[11.5px] font-medium text-[#9D113C]">Excuse</div>
+                  <div className="text-[11.5px] font-medium text-[#9D113C] truncate tabular-nums">
+                    {excCount === 0
+                      ? 'Izin · Belum ada pengajuan'
+                      : `Izin · ${excCount} keterangan tercatat`}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-[3px]">
+              <div className="flex items-center gap-[3px] shrink-0">
                 {Array.from({ length: 14 }).map((_, i) => (
                   <span
                     key={i}
@@ -554,7 +591,7 @@ export const AttendancePage: React.FC = () => {
 
                   <div className="divide-y divide-black/[0.06] flex-1">
                     {visibleItems.length === 0 ? (
-                      <div className="text-center py-8 text-[12px] text-[#9496A1]">No records</div>
+                      <div className="text-center py-8 text-[12px] text-[#9496A1]">Belum ada data</div>
                     ) : (
                       visibleItems.map(renderStudentRow)
                     )}
@@ -617,7 +654,7 @@ export const AttendancePage: React.FC = () => {
 
                       {/* Horizontal Slide Viewport (3 columns x 10 items per slide = 30 items/slide) */}
                       {expandedList.length === 0 ? (
-                        <div className="text-center py-12 text-[12.5px] text-[#9496A1]">No records</div>
+                        <div className="text-center py-12 text-[12.5px] text-[#9496A1]">Belum ada data</div>
                       ) : (
                         <div className="overflow-hidden">
                           <motion.div

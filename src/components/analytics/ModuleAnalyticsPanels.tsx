@@ -66,14 +66,16 @@ export const AttendanceAnalyticsPanel: React.FC<{
           </div>
           <div className="flex items-baseline justify-between gap-2 mt-1.5">
             <span className="kpi-value text-[24px] font-bold text-[#1C1D21] tabular-nums">
-              {data.effectiveAttendanceRatePct}%
+              {data.totalStatusEntries > 0 ? `${data.effectiveAttendanceRatePct}%` : '—'}
             </span>
             <span className="text-[11.5px] font-medium text-[#35684E] tabular-nums">
-              Target {data.targetThresholdPct}%
+              Target ≥ {data.targetThresholdPct}%
             </span>
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
-            {data.presentCount} hadir · {data.excuseCount} izin · {data.absentCount} absent
+            {data.totalStatusEntries === 0
+              ? 'Belum ada catatan kehadiran'
+              : `${data.presentCount} hadir · ${data.excuseCount} izin · ${data.absentCount} absen`}
           </p>
         </div>
 
@@ -83,14 +85,16 @@ export const AttendanceAnalyticsPanel: React.FC<{
           </div>
           <div className="flex items-baseline justify-between gap-2 mt-1.5">
             <span className="kpi-value text-[24px] font-bold text-[#1C1D21] tabular-nums">
-              {data.onTimeRateAmongPresentPct}%
+              {data.presentCount > 0 ? `${data.onTimeRateAmongPresentPct}%` : '—'}
             </span>
             <span className="text-[11.5px] font-medium text-[#5854A8] tabular-nums">
               {data.qrCheckInCount} scan QR
             </span>
           </div>
           <p className="text-[11.5px] text-[#5854A8] mt-1 tabular-nums">
-            {data.onTimeCount} tepat waktu · {data.lateCount} terlambat
+            {data.presentCount === 0
+              ? 'Belum ada peserta tercatat hadir'
+              : `${data.onTimeCount} tepat waktu · ${data.lateCount} terlambat`}
           </p>
         </div>
 
@@ -120,11 +124,13 @@ export const AttendanceAnalyticsPanel: React.FC<{
               {data.atRiskCrewCount}
             </span>
             <span className="text-[11.5px] font-medium text-[#9D113C] tabular-nums">
-              {data.absentCount} absent
+              {data.absentCount} absen
             </span>
           </div>
-          <p className="text-[11.5px] text-[#7D3A51] mt-1">
-            Di bawah batas kelulusan / absent
+          <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
+            {data.atRiskCrewCount === 0
+              ? 'Semua peserta di atas ambang minimal'
+              : `${data.atRiskCrewCount} peserta di bawah batas ${data.targetThresholdPct}% / absen`}
           </p>
         </div>
       </div>
@@ -331,7 +337,9 @@ export const ExamAssessmentAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
-            Median {data.totalAssessments > 0 ? data.medianScore : '—'} · SD {data.stdDev}
+            {data.totalAssessments > 0
+              ? `Median ${data.medianScore} · SD ${data.stdDev}`
+              : 'Belum ada riwayat penilaian'}
           </p>
         </div>
 
@@ -348,7 +356,11 @@ export const ExamAssessmentAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
-            {data.failCount} di bawah KKM
+            {data.totalAssessments === 0
+              ? 'Belum ada peserta dinilai'
+              : data.failCount === 0
+              ? 'Seluruh penilaian memenuhi KKM'
+              : `${data.failCount} perlu remedial (di bawah KKM)`}
           </p>
         </div>
 
@@ -367,7 +379,9 @@ export const ExamAssessmentAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#5854A8] mt-1 tabular-nums">
-            {data.byPosition.length} posisi diuji
+            {data.totalAssessments > 0
+              ? `${data.byPosition.length} posisi diuji`
+              : 'Menunggu data penilaian'}
           </p>
         </div>
 
@@ -384,7 +398,9 @@ export const ExamAssessmentAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#6E717A] mt-1 tabular-nums">
-            {data.bySubject.length} subject ujian
+            {data.bySubject.length > 0
+              ? `${data.bySubject.length} mata pelajaran diuji`
+              : 'Belum ada mata pelajaran dinilai'}
           </p>
         </div>
       </div>
@@ -591,14 +607,16 @@ export const AssignmentAnalyticsPanel: React.FC<{
           </div>
           <div className="flex items-baseline justify-between gap-2 mt-1.5">
             <span className="kpi-value text-[24px] font-bold text-[#1C1D21] tabular-nums">
-              {data.submissionRatePct}%
+              {data.totalExpectedSubmissions > 0 ? `${data.submissionRatePct}%` : '—'}
             </span>
             <span className="text-[11.5px] font-medium text-[#5854A8] tabular-nums">
               {data.totalSubmitted}/{data.totalExpectedSubmissions}
             </span>
           </div>
           <p className="text-[11.5px] text-[#5854A8] mt-1 tabular-nums">
-            {data.totalAssignments} tugas ({data.activeCount} active · {data.completedCount} selesai)
+            {data.totalAssignments === 0
+              ? 'Belum ada tugas aktif'
+              : `${data.totalAssignments} tugas (${data.activeCount} aktif · ${data.completedCount} selesai)`}
           </p>
         </div>
 
@@ -615,7 +633,9 @@ export const AssignmentAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
-            Rentang {data.gradedCount > 0 ? `${data.lowestScore}–${data.highestScore}` : '—'} ({data.gradedCount} dinilai)
+            {data.gradedCount > 0
+              ? `Rentang ${data.lowestScore}–${data.highestScore} (${data.gradedCount} dinilai)`
+              : 'Belum ada jawaban yang dinilai'}
           </p>
         </div>
 
@@ -631,8 +651,10 @@ export const AssignmentAnalyticsPanel: React.FC<{
               {data.needsGradingCount} tugas
             </span>
           </div>
-          <p className="text-[11.5px] text-[#8C5811] mt-1">
-            Jawaban menunggu penilaian pengajar
+          <p className="text-[11.5px] text-[#8C5811] mt-1 tabular-nums">
+            {data.needsReviewCount === 0
+              ? 'Semua jawaban masuk sudah dinilai'
+              : `Menunggu pemeriksaan di ${data.needsGradingCount} tugas`}
           </p>
         </div>
 
@@ -649,7 +671,9 @@ export const AssignmentAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
-            {data.scheduledPhaseCount} terjadwal · {data.endedPhaseCount} berakhir
+            {data.totalAssignments === 0
+              ? 'Belum ada jadwal tugas'
+              : `${data.scheduledPhaseCount} terjadwal · ${data.endedPhaseCount} berakhir`}
           </p>
         </div>
       </div>
@@ -879,7 +903,9 @@ export const LiveQuizAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
-            {data.classicSessionsCount} Classic · {data.testSessionsCount} Test Mode
+            {data.totalSessions === 0
+              ? 'Belum ada sesi kuis selesai'
+              : `${data.classicSessionsCount} Classic · ${data.testSessionsCount} Test Mode`}
           </p>
         </div>
 
@@ -898,7 +924,9 @@ export const LiveQuizAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#5854A8] mt-1 tabular-nums">
-            Puncak skor {data.highestParticipantScore.toLocaleString('id-ID')} · Avg streak {data.avgBestStreak}x
+            {data.totalSessions > 0
+              ? `Puncak ${data.highestParticipantScore.toLocaleString('id-ID')} · Rata-rata streak ${data.avgBestStreak}x`
+              : 'Menunggu partisipasi sesi'}
           </p>
         </div>
 
@@ -915,7 +943,9 @@ export const LiveQuizAnalyticsPanel: React.FC<{
             </span>
           </div>
           <p className="text-[11.5px] text-[#6E717A] mt-1 tabular-nums">
-            {data.totalParticipantEntries} total keikutsertaan
+            {data.totalParticipantEntries > 0
+              ? `${data.totalParticipantEntries} total keikutsertaan`
+              : 'Siap dijalankan ke kelas'}
           </p>
         </div>
 
@@ -925,16 +955,18 @@ export const LiveQuizAnalyticsPanel: React.FC<{
           </div>
           <div className="flex items-baseline justify-between gap-2 mt-1.5">
             <span className="kpi-value text-[24px] font-bold text-[#1C1D21] tabular-nums">
-              {data.totalTabSwitches}
+              {data.testSessionsCount > 0 ? data.totalTabSwitches : '—'}
             </span>
             <span className="text-[11.5px] font-medium text-[#9D113C] tabular-nums">
-              tab switch
+              {data.testSessionsCount > 0 ? 'pindah tab' : '0 sesi'}
             </span>
           </div>
-          <p className="text-[11.5px] text-[#7D3A51] mt-1">
-            {data.totalTabSwitches === 0
-              ? 'Tidak ada indikasi pindah tab'
-              : 'Total perpindahan tab tercatat'}
+          <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
+            {data.testSessionsCount === 0
+              ? 'Belum ada sesi Test Mode'
+              : data.totalTabSwitches === 0
+              ? 'Tidak ada perpindahan tab terdeteksi'
+              : `Tercatat di ${data.testSessionsCount} sesi Test Mode`}
           </p>
         </div>
       </div>

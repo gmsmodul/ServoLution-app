@@ -51,9 +51,13 @@ export const StudentsPage: React.FC = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const avgAttendance = Math.round(
-    classScopedStudents.reduce((acc, s) => acc + s.rate, 0) / (classScopedStudents.length || 1)
-  );
+  const avgAttendance =
+    classScopedStudents.length > 0
+      ? Math.round(
+          classScopedStudents.reduce((acc, s) => acc + s.rate, 0) /
+            classScopedStudents.length
+        )
+      : null;
 
   const statusTabs = [
     {
@@ -101,7 +105,7 @@ export const StudentsPage: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <h1 className="text-[24px] font-semibold tracking-tight text-[#1C1D21]">Students</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-[#FFF5E6] text-[#8C5811] text-[11.5px] font-bold tabular-nums">
-              Avg {avgAttendance}%
+              {avgAttendance !== null ? `Rata-rata Hadir ${avgAttendance}%` : 'Belum ada data'}
             </span>
           </div>
         </div>
@@ -132,7 +136,7 @@ export const StudentsPage: React.FC = () => {
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <span className="md:hidden px-2.5 py-1 rounded-full bg-[#FFF5E6] text-[#8C5811] text-[11.5px] font-bold mr-auto tabular-nums">
-          Avg {avgAttendance}%
+          {avgAttendance !== null ? `Rata-rata Hadir ${avgAttendance}%` : 'Belum ada data'}
         </span>
         <div className="flex flex-wrap items-center justify-end md:justify-between gap-2.5 w-auto md:w-full">
         <SplitFilterButton

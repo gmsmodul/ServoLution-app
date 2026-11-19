@@ -48,7 +48,65 @@ export const ClassPrepPage: React.FC = () => {
   const activePlan =
     filteredPlans.find((p) => p.id === selectedPlanId) ||
     filteredPlans[0] ||
-    lessonPlans[0];
+    null;
+
+  const prepKpis = useMemo(() => {
+    const totalPlans = filteredPlans.length;
+    const readyPlans = filteredPlans.filter((p) => p.status === 'Ready' || p.progress >= 100).length;
+    const inProgressPlans = filteredPlans.filter(
+      (p) => p.status !== 'Ready' && p.progress < 100 && p.status === 'In Progress'
+    ).length;
+    const draftPlans = filteredPlans.filter(
+      (p) => p.status !== 'Ready' && p.progress < 100 && p.status === 'Draft'
+    ).length;
+    const pendingPlans = Math.max(0, totalPlans - readyPlans);
+
+    const avgProgress =
+      totalPlans > 0
+        ? Math.round(filteredPlans.reduce((acc, p) => acc + p.progress, 0) / totalPlans)
+        : 0;
+
+    let totalChecklist = 0;
+    let doneChecklist = 0;
+    let totalMaterials = 0;
+    let plansWithMaterials = 0;
+    const typeCounts: Record<string, number> = {};
+
+    filteredPlans.forEach((plan) => {
+      totalChecklist += plan.checklist.length;
+      doneChecklist += plan.checklist.filter((c) => c.done).length;
+      if (plan.materials.length > 0) {
+        plansWithMaterials += 1;
+      }
+      totalMaterials += plan.materials.length;
+      plan.materials.forEach((mat) => {
+        const key = String(mat.type || 'FILE').toUpperCase();
+        typeCounts[key] = (typeCounts[key] || 0) + 1;
+      });
+    });
+
+    const remainingChecklist = Math.max(0, totalChecklist - doneChecklist);
+    const typeBreakdown = Object.entries(typeCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([type, count]) => `${count} ${type}`)
+      .join(' · ');
+
+    return {
+      totalPlans,
+      readyPlans,
+      inProgressPlans,
+      draftPlans,
+      pendingPlans,
+      avgProgress,
+      totalChecklist,
+      doneChecklist,
+      remainingChecklist,
+      totalMaterials,
+      plansWithMaterials,
+      typeBreakdown,
+    };
+  }, [filteredPlans]);
 
   const onAddTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,50 +139,93 @@ export const ClassPrepPage: React.FC = () => {
             className={ACTION_BTN_PRIMARY}
           >
             <Plus className="w-4 h-4 shrink-0" />
-            <span className="sm:hidden">New</span>
-            <span className="hidden sm:inline">New Lesson Plan</span>
+            <span className="sm:hidden">Buat</span>
+            <span className="hidden sm:inline">Buat Rencana Kelas</span>
           </button>
         </div>
       </div>
 
-      {/* Unified Readiness Summary Strip */}
+      {/* Unified Live Readiness Summary Strip */}
       <div className="rounded-2xl border border-black/[0.12] grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-black/[0.08] overflow-hidden">
         <div className="p-4 sm:p-5 bg-[#E6F9F0]">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-            <span className="text-[12px] font-semibold text-[#146C43]">Ready to Teach</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+              <span className="text-[12px] font-semibold text-[#146C43]">Siap Mengajar</span>
+            </div>
+            <span className="text-[11.5px] font-semibold text-[#146C43] tabular-nums">
+              {prepKpis.totalPlans > 0 ? `${prepKpis.avgProgress}% rata-rata` : 'Belum ada data'}
+            </span>
           </div>
           <div className="kpi-value text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
-            {lessonPlans.filter((p) => p.status === 'Ready').length} Modules
+            {prepKpis.totalPlans > 0
+              ? `${prepKpis.readyPlans}/${prepKpis.totalPlans} Modul`
+              : '0 Modul'}
           </div>
-          <p className="text-[11.5px] text-[#35684E] mt-0.5">All slides &amp; worksheets uploaded</p>
+          <p className="text-[11.5px] text-[#35684E] mt-0.5 tabular-nums">
+            {prepKpis.totalPlans === 0
+              ? 'Belum ada rencana kelas pada filter ini'
+              : prepKpis.readyPlans === prepKpis.totalPlans
+              ? `Seluruh ${prepKpis.totalChecklist} poin checklist telah tuntas`
+              : `${prepKpis.doneChecklist}/${prepKpis.totalChecklist} poin checklist sudah selesai`}
+          </p>
         </div>
+
         <div className="p-4 sm:p-5 bg-[#FFF5E6]">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
-            <span className="text-[12px] font-semibold text-[#8C5811]">In Preparation</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+              <span className="text-[12px] font-semibold text-[#8C5811]">Dalam Persiapan</span>
+            </div>
+            <span className="text-[11.5px] font-semibold text-[#8C5811] tabular-nums">
+              {prepKpis.remainingChecklist > 0
+                ? `${prepKpis.remainingChecklist} poin tersisa`
+                : 'Semua tuntas'}
+            </span>
           </div>
           <div className="kpi-value text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
-            {lessonPlans.filter((p) => p.status !== 'Ready').length} Modules
+            {prepKpis.pendingPlans} Modul
           </div>
-          <p className="text-[11.5px] text-[#7A592A] mt-0.5">Pending final checklist items</p>
+          <p className="text-[11.5px] text-[#7A592A] mt-0.5 tabular-nums">
+            {prepKpis.pendingPlans === 0
+              ? 'Tidak ada checklist persiapan yang tertunda'
+              : `${prepKpis.inProgressPlans} sedang dikerjakan · ${prepKpis.draftPlans} draf`}
+          </p>
         </div>
+
         <div className="p-4 sm:p-5 bg-[#F0EFFC]">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#6C5DD3]" />
-            <span className="text-[12px] font-semibold text-[#3F3B99]">Teaching Resources</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#6C5DD3]" />
+              <span className="text-[12px] font-semibold text-[#3F3B99]">Bahan Ajar Terlampir</span>
+            </div>
+            <span className="text-[11.5px] font-semibold text-[#3F3B99] tabular-nums">
+              {prepKpis.plansWithMaterials}/{prepKpis.totalPlans} modul
+            </span>
           </div>
           <div className="kpi-value text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
-            {lessonPlans.reduce((acc, p) => acc + p.materials.length, 0)} Files
+            {prepKpis.totalMaterials} Berkas
           </div>
-          <p className="text-[11.5px] text-[#5854A8] mt-0.5">PDF decks, labs &amp; video guides</p>
+          <p className="text-[11.5px] text-[#5854A8] mt-0.5 tabular-nums truncate">
+            {prepKpis.typeBreakdown || 'Belum ada bahan ajar terlampir'}
+          </p>
         </div>
       </div>
 
       {/* 12-Col Layout: Lesson Modules List (7 Cols) | Active Module Inspector (5 Cols) */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-7">
         <div className="md:col-span-7 bg-white rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden self-start">
-          {filteredPlans.map((plan) => {
+          {filteredPlans.length === 0 ? (
+            <div className="p-10 text-center space-y-1.5">
+              <div className="text-[14px] font-semibold text-[#1C1D21]">
+                Belum ada modul persiapan untuk kelas ini
+              </div>
+              <p className="text-[12px] text-[#8A8D98]">
+                Pilih kelas lain atau tambahkan rencana pembelajaran baru.
+              </p>
+            </div>
+          ) : (
+            filteredPlans.map((plan) => {
               const theme = PASTEL_THEMES[plan.theme] || PASTEL_THEMES.periwinkle;
               const isSelected = activePlan?.id === plan.id;
               return (
@@ -152,7 +253,7 @@ export const ClassPrepPage: React.FC = () => {
                           : 'bg-[#FFF5E6] text-[#8C5811]'
                       }`}
                     >
-                      {plan.status} · {plan.progress}%
+                      {plan.status === 'Ready' ? 'Siap' : plan.status === 'Draft' ? 'Draf' : 'Proses'} · {plan.progress}%
                     </span>
                   </div>
 
@@ -166,13 +267,14 @@ export const ClassPrepPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex items-center justify-between text-[11.5px] text-[#8A8D98] tabular-nums">
-                      <span>Scheduled: {plan.date}</span>
-                      <span>{plan.materials.length} attachments</span>
+                      <span>Jadwal: {plan.date}</span>
+                      <span>{plan.materials.length} lampiran</span>
                     </div>
                   </div>
                 </div>
               );
-            })}
+            })
+          )}
         </div>
 
         {/* Lesson checklist */}
@@ -181,7 +283,7 @@ export const ClassPrepPage: React.FC = () => {
             <div className="flex items-start justify-between gap-2 pb-4 border-b border-black/[0.06]">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A8D98]">
-                  Lesson checklist
+                  Checklist Pembelajaran
                 </span>
                 <h2 className="text-[16.5px] font-semibold text-[#1C1D21] mt-1">{activePlan.topic}</h2>
                 <p className="text-[12px] text-[#6E717A] mt-0.5">
@@ -195,7 +297,7 @@ export const ClassPrepPage: React.FC = () => {
 
             {/* Interactive Checklist */}
             <div className="space-y-2.5">
-              <div className="text-[12.5px] font-semibold text-[#1C1D21]">Preparation Checklist</div>
+              <div className="text-[12.5px] font-semibold text-[#1C1D21]">Daftar Persiapan</div>
               <div className="rounded-xl border border-black/[0.06] divide-y divide-black/[0.05] overflow-hidden">
                 {activePlan.checklist.map((item) => (
                   <button
@@ -220,7 +322,7 @@ export const ClassPrepPage: React.FC = () => {
                   type="text"
                   value={newTaskText}
                   onChange={(e) => setNewTaskText(e.target.value)}
-                  placeholder="Add preparation step..."
+                  placeholder="Tambah langkah persiapan..."
                   className="flex-1 h-9 bg-white border border-black/[0.1] rounded-full px-3.5 text-[13px] outline-none focus:border-[#ee2e65]"
                 />
                 <button
@@ -228,39 +330,45 @@ export const ClassPrepPage: React.FC = () => {
                   className={ACTION_BTN_PRIMARY}
                 >
                   <Plus className="w-4 h-4 sm:hidden shrink-0" />
-                  <span>Add</span>
+                  <span>Tambah</span>
                 </button>
               </form>
             </div>
 
             {/* Attached Materials */}
             <div className="space-y-2 pt-3 border-t border-black/[0.06]">
-              <div className="text-[12.5px] font-semibold text-[#1C1D21]">Attached Materials</div>
+              <div className="text-[12.5px] font-semibold text-[#1C1D21]">Bahan Ajar Terlampir</div>
               <div className="rounded-xl border border-black/[0.06] divide-y divide-black/[0.05] overflow-hidden">
-                {activePlan.materials.map((mat, idx) => {
-                  const matColor =
-                    mat.type === 'VIDEO'
-                      ? 'bg-[#FEF1F5] text-[#9D113C]'
-                      : mat.type === 'IMG'
-                      ? 'bg-[#FFF5E6] text-[#8C5811]'
-                      : mat.type === 'DOC'
-                      ? 'bg-[#E6F9F0] text-[#146C43]'
-                      : 'bg-[#F0EFFC] text-[#3F3B99]';
-                  return (
-                    <div
-                      key={idx}
-                      className="bg-white px-3.5 py-2.5 flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${matColor}`}>
-                          {mat.type}
-                        </span>
-                        <span className="text-[12.5px] font-medium text-[#1C1D21] truncate">{mat.name}</span>
+                {activePlan.materials.length === 0 ? (
+                  <div className="bg-white px-3.5 py-3 text-[12px] text-[#8A8D98]">
+                    Belum ada berkas terlampir pada modul ini.
+                  </div>
+                ) : (
+                  activePlan.materials.map((mat, idx) => {
+                    const matColor =
+                      mat.type === 'VIDEO'
+                        ? 'bg-[#FEF1F5] text-[#9D113C]'
+                        : mat.type === 'IMG'
+                        ? 'bg-[#FFF5E6] text-[#8C5811]'
+                        : mat.type === 'DOC'
+                        ? 'bg-[#E6F9F0] text-[#146C43]'
+                        : 'bg-[#F0EFFC] text-[#3F3B99]';
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-white px-3.5 py-2.5 flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${matColor}`}>
+                            {mat.type}
+                          </span>
+                          <span className="text-[12.5px] font-medium text-[#1C1D21] truncate">{mat.name}</span>
+                        </div>
+                        <span className="text-[11px] text-[#8A8D98] shrink-0 tabular-nums">{mat.size}</span>
                       </div>
-                      <span className="text-[11px] text-[#8A8D98] shrink-0 tabular-nums">{mat.size}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>

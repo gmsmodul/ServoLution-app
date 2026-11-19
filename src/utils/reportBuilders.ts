@@ -465,19 +465,30 @@ export function compileMenuReport(params: {
         {
           label: 'Total Materi',
           value: String(filteredMaterials.length),
-          subtext: `${fullyCompletedMaterials} tuntas seluruh crew`,
+          subtext:
+            filteredMaterials.length > 0
+              ? `${fullyCompletedMaterials} tuntas seluruh crew`
+              : 'Belum ada materi tercatat',
           tone: 'periwinkle',
         },
         {
           label: 'Rata-rata Progres Crew',
-          value: `${avgCompletionPct}%`,
-          subtext: 'Akumulasi baca & tonton video',
+          value: filteredMaterials.length > 0 ? `${avgCompletionPct}%` : '—',
+          subtext:
+            filteredMaterials.length > 0
+              ? `${filteredMaterials.filter((m) => m.type === 'video').length} video · ${
+                  filteredMaterials.filter((m) => m.type !== 'video').length
+                } dokumen/slide`
+              : 'Menunggu materi aktif',
           tone: 'mint',
         },
         {
           label: 'Total Unduhan',
           value: String(totalDownloads),
-          subtext: 'Akses offline & repositori',
+          subtext:
+            filteredMaterials.length > 0
+              ? `Rata-rata ${round1(totalDownloads / filteredMaterials.length)} unduhan/materi`
+              : 'Belum ada unduhan',
           tone: 'peach',
         },
         {
@@ -553,27 +564,33 @@ export function compileMenuReport(params: {
       ...baseMeta,
       kpis: [
         {
-          label: 'Total Lesson Plan',
+          label: 'Total Rencana Kelas',
           value: String(filteredPlans.length),
-          subtext: `${readyCount} siap ajar (Ready)`,
+          subtext:
+            filteredPlans.length > 0
+              ? `${readyCount} siap mengajar`
+              : 'Belum ada rencana kelas',
           tone: 'periwinkle',
         },
         {
           label: 'Rata-rata Kesiapan',
-          value: `${avgProgress}%`,
-          subtext: `${doneTasks}/${totalTasks} item checklist tuntas`,
+          value: filteredPlans.length > 0 ? `${avgProgress}%` : '—',
+          subtext: `${doneTasks}/${totalTasks} poin checklist tuntas`,
           tone: 'mint',
         },
         {
           label: 'Perlu Penyelesaian',
           value: String(inProgressCount + draftCount),
-          subtext: `${inProgressCount} in progress · ${draftCount} draft`,
+          subtext: `${inProgressCount} dikerjakan · ${draftCount} draf`,
           tone: 'peach',
         },
         {
           label: 'Lampiran Bahan Ajar',
           value: String(filteredPlans.reduce((s, p) => s + p.materials.length, 0)),
-          subtext: 'File terhubung pada RPP',
+          subtext:
+            filteredPlans.length > 0
+              ? `Tersebar di ${filteredPlans.filter((p) => p.materials.length > 0).length}/${filteredPlans.length} modul`
+              : 'Belum ada lampiran',
           tone: 'coral',
         },
       ],
@@ -621,26 +638,29 @@ export function compileMenuReport(params: {
       kpis: [
         {
           label: 'Kehadiran Efektif',
-          value: `${attendanceStats.effectiveAttendanceRatePct}%`,
+          value:
+            attendanceStats.totalStatusEntries > 0
+              ? `${attendanceStats.effectiveAttendanceRatePct}%`
+              : '—',
           subtext: `Target kelulusan ≥ ${attendanceStats.targetThresholdPct}%`,
           tone: 'mint',
         },
         {
           label: 'Status Hadir',
           value: String(attendanceStats.presentCount),
-          subtext: `${attendanceStats.onTimeCount} On Time · ${attendanceStats.lateCount} Late`,
+          subtext: `${attendanceStats.onTimeCount} tepat waktu · ${attendanceStats.lateCount} terlambat`,
           tone: 'periwinkle',
         },
         {
-          label: 'QR vs Roster',
+          label: 'QR vs Daftar Hadir',
           value: `${attendanceStats.qrCheckInCount} / ${attendanceStats.rosterCheckInCount}`,
-          subtext: 'Check-in QR & input manual',
+          subtext: `${attendanceStats.qrCheckInCount} scan QR · ${attendanceStats.rosterCheckInCount} input manual`,
           tone: 'peach',
         },
         {
           label: 'Absen / Berisiko',
           value: `${attendanceStats.absentCount} / ${attendanceStats.atRiskCrewCount}`,
-          subtext: `${attendanceStats.excuseCount} Izin · ${attendanceStats.atRiskCrewCount} perlu tindak lanjut`,
+          subtext: `${attendanceStats.excuseCount} izin · ${attendanceStats.atRiskCrewCount} perlu tindak lanjut`,
           tone: 'coral',
         },
       ],
@@ -754,7 +774,10 @@ export function compileMenuReport(params: {
             examStats.totalAssessments > 0
               ? `${examStats.lowestScore} – ${examStats.highestScore}`
               : '—',
-          subtext: 'Terendah – Tertinggi',
+          subtext:
+            examStats.totalAssessments > 0
+              ? `Selisih ${round1(examStats.highestScore - examStats.lowestScore)} poin · ${examStats.byPosition.length} posisi`
+              : 'Belum ada riwayat nilai ujian',
           tone: 'coral',
         },
       ],
@@ -844,7 +867,10 @@ export function compileMenuReport(params: {
         },
         {
           label: 'Tingkat Pengumpulan',
-          value: `${assignmentStats.submissionRatePct}%`,
+          value:
+            assignmentStats.totalExpectedSubmissions > 0
+              ? `${assignmentStats.submissionRatePct}%`
+              : '—',
           subtext: `${assignmentStats.totalSubmitted}/${assignmentStats.totalExpectedSubmissions} jawaban masuk`,
           tone: 'mint',
         },
@@ -860,7 +886,7 @@ export function compileMenuReport(params: {
         {
           label: 'Antrean Review / Pending',
           value: `${assignmentStats.needsReviewCount} / ${assignmentStats.pendingCount}`,
-          subtext: 'Menunggu nilai / belum mengumpulkan',
+          subtext: `${assignmentStats.needsReviewCount} menunggu nilai · ${assignmentStats.pendingCount} belum kumpul`,
           tone: 'coral',
         },
       ],
@@ -937,13 +963,21 @@ export function compileMenuReport(params: {
         {
           label: 'Rata-rata Skor / Streak',
           value: liveQuizStats.totalSessions > 0 ? liveQuizStats.meanParticipantScore.toLocaleString('id-ID') : '—',
-          subtext: `Skor tertinggi ${liveQuizStats.highestParticipantScore.toLocaleString('id-ID')} · Avg streak ${liveQuizStats.avgBestStreak}x`,
+          subtext:
+            liveQuizStats.totalSessions > 0
+              ? `Puncak ${liveQuizStats.highestParticipantScore.toLocaleString('id-ID')} · Rata-rata streak ${liveQuizStats.avgBestStreak}x`
+              : 'Belum ada sesi selesai',
           tone: 'periwinkle',
         },
         {
-          label: 'Tab Switches (Test Mode)',
-          value: String(liveQuizStats.totalTabSwitches),
-          subtext: 'Indikator fokus integritas peserta',
+          label: 'Integritas Test Mode',
+          value: liveQuizStats.testSessionsCount > 0 ? String(liveQuizStats.totalTabSwitches) : '—',
+          subtext:
+            liveQuizStats.testSessionsCount === 0
+              ? 'Belum ada sesi Test Mode'
+              : liveQuizStats.totalTabSwitches === 0
+                ? 'Tidak ada perpindahan tab terdeteksi'
+                : `Tercatat di ${liveQuizStats.testSessionsCount} sesi Test Mode`,
           tone: 'coral',
         },
       ],
@@ -1061,19 +1095,28 @@ export function compileMenuReport(params: {
         {
           label: 'Total Kapasitas Sesi',
           value: String(totalSeats),
-          subtext: 'Akumulasi slot peserta terjadwal',
+          subtext:
+            filteredSchedules.length > 0
+              ? `Rata-rata ${Math.round(totalSeats / filteredSchedules.length)} peserta/sesi`
+              : 'Belum ada sesi terjadwal',
           tone: 'mint',
         },
         {
-          label: 'Rata-rata Toleransi Late',
-          value: `${avgTolerance} mnt`,
-          subtext: 'Batas check-in QR On Time',
+          label: 'Rata-rata Toleransi Terlambat',
+          value: filteredSchedules.length > 0 ? `${avgTolerance} mnt` : '—',
+          subtext:
+            filteredSchedules.length > 0
+              ? `Berlaku pada ${filteredSchedules.length} sesi aktif`
+              : 'Belum ada jadwal',
           tone: 'peach',
         },
         {
-          label: 'Check-In QR Tercatat',
+          label: 'Scan QR Tercatat',
           value: String(attendanceStats.qrCheckInCount),
-          subtext: 'Sinkron ke All Attendance Records',
+          subtext:
+            attendanceStats.qrCheckInCount > 0
+              ? `${attendanceStats.onTimeCount} tepat waktu · ${attendanceStats.lateCount} terlambat`
+              : 'Belum ada scan QR masuk',
           tone: 'coral',
         },
       ],
@@ -1257,13 +1300,21 @@ export function compileMenuReport(params: {
         {
           label: 'Rata-rata Rating',
           value: filteredTrainers.length > 0 ? `${avgRating}%` : '—',
-          subtext: 'Skor kepuasan dari feedback crew',
+          subtext:
+            filteredFeedbacks.length > 0
+              ? `Dihitung dari ${filteredFeedbacks.length} ulasan crew`
+              : filteredTrainers.length > 0
+                ? 'Menggunakan skor dasar direktori'
+                : 'Belum ada trainer terdaftar',
           tone: 'mint',
         },
         {
           label: 'Total Sesi Mengajar',
           value: String(totalSessions),
-          subtext: 'Akumulasi sesi kelas aktif',
+          subtext:
+            filteredTrainers.length > 0
+              ? `Rata-rata ${round1(totalSessions / filteredTrainers.length)} sesi/trainer`
+              : 'Belum ada sesi tercatat',
           tone: 'peach',
         },
         {
@@ -1392,26 +1443,32 @@ export function compileMenuReport(params: {
       kpis: [
         {
           label: 'Kehadiran Efektif',
-          value: `${attendanceStats.effectiveAttendanceRatePct}%`,
+          value:
+            attendanceStats.totalStatusEntries > 0
+              ? `${attendanceStats.effectiveAttendanceRatePct}%`
+              : '—',
           subtext: `Target batch ≥ ${graduationRule.minAttendanceRatePct}%`,
           tone: 'mint',
         },
         {
-          label: 'Kelulusan Batch Siswa',
-          value: `${studentPassRatePct}%`,
+          label: 'Kelulusan Batch Peserta',
+          value: filteredStudents.length > 0 ? `${studentPassRatePct}%` : '—',
           subtext: `${eligibleStudentsCount}/${filteredStudents.length} memenuhi kriteria`,
           tone: 'periwinkle',
         },
         {
-          label: 'Submit & Nilai Tugas',
-          value: `${assignmentStats.submissionRatePct}%`,
-          subtext: `Avg skor ${assignmentStats.gradedCount > 0 ? assignmentStats.meanScore : '—'}`,
+          label: 'Pengumpulan & Nilai Tugas',
+          value:
+            assignmentStats.totalExpectedSubmissions > 0
+              ? `${assignmentStats.submissionRatePct}%`
+              : '—',
+          subtext: `Rata-rata skor ${assignmentStats.gradedCount > 0 ? assignmentStats.meanScore : '—'}`,
           tone: 'peach',
         },
         {
           label: 'Akurasi LiveQuiz',
           value: liveQuizStats.totalSessions > 0 ? `${liveQuizStats.overallAvgAccuracyPct}%` : '—',
-          subtext: `${liveQuizStats.totalSessions} sesi · ${examStats.totalAssessments} ujian`,
+          subtext: `${liveQuizStats.totalSessions} sesi · ${examStats.totalAssessments} penilaian ujian`,
           tone: 'coral',
         },
       ],
@@ -1483,29 +1540,35 @@ export function compileMenuReport(params: {
     kpis: [
       {
         label: 'Kehadiran Efektif',
-        value: `${attendanceStats.effectiveAttendanceRatePct}%`,
+        value:
+          attendanceStats.totalStatusEntries > 0
+            ? `${attendanceStats.effectiveAttendanceRatePct}%`
+            : '—',
         subtext: `${attendanceStats.presentCount} hadir · ${attendanceStats.atRiskCrewCount} berisiko`,
         tone: 'mint',
       },
       {
         label: 'Kelulusan & Ujian',
-        value: `${studentPassRatePct}%`,
+        value: filteredStudents.length > 0 ? `${studentPassRatePct}%` : '—',
         subtext:
           examStats.totalAssessments > 0
-            ? `Avg ujian ${examStats.meanScore} · Lulus KKM ${examStats.passRatePct}%`
-            : `${eligibleStudentsCount}/${filteredStudents.length} siswa layak lulus`,
+            ? `Rata-rata ujian ${examStats.meanScore} · Lulus KKM ${examStats.passRatePct}%`
+            : `${eligibleStudentsCount}/${filteredStudents.length} peserta layak lulus`,
         tone: 'periwinkle',
       },
       {
-        label: 'Assignment & Materi',
-        value: `${assignmentStats.submissionRatePct}%`,
-        subtext: `Avg tugas ${assignmentStats.meanScore} · Progres materi ${avgMaterialProgress}%`,
+        label: 'Tugas & Materi',
+        value:
+          assignmentStats.totalExpectedSubmissions > 0
+            ? `${assignmentStats.submissionRatePct}%`
+            : '—',
+        subtext: `Rata-rata tugas ${assignmentStats.gradedCount > 0 ? assignmentStats.meanScore : '—'} · Progres materi ${avgMaterialProgress}%`,
         tone: 'peach',
       },
       {
         label: 'LiveQuiz & Trainer',
         value: liveQuizStats.totalSessions > 0 ? `${liveQuizStats.overallAvgAccuracyPct}%` : '—',
-        subtext: `${liveQuizStats.totalSessions} sesi kuis · Rating trainer ${avgTrainerRating}%`,
+        subtext: `${liveQuizStats.totalSessions} sesi kuis · Rating trainer ${filteredTrainers.length > 0 ? `${avgTrainerRating}%` : '—'}`,
         tone: 'coral',
       },
     ],

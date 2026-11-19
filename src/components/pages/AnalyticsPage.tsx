@@ -370,19 +370,23 @@ export const AnalyticsPage: React.FC = () => {
               className="p-4 sm:p-5 bg-[#E6F9F0]/75 hover:bg-[#E6F9F0] text-left transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between gap-2 text-[12px] font-semibold text-[#146C43]">
-                <span>All Attendance Records</span>
+                <span>Kehadiran Efektif</span>
                 <Clock className="w-3.5 h-3.5 shrink-0" />
               </div>
               <div className="flex items-baseline justify-between gap-2 mt-2">
                 <span className="kpi-value text-[26px] font-bold text-[#1C1D21] tabular-nums">
-                  {attendanceStats.effectiveAttendanceRatePct}%
+                  {attendanceStats.totalStatusEntries > 0
+                    ? `${attendanceStats.effectiveAttendanceRatePct}%`
+                    : '—'}
                 </span>
                 <span className="text-[11.5px] font-semibold text-[#146C43] tabular-nums">
                   {attendanceStats.totalUniqueCrew} crew
                 </span>
               </div>
               <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
-                {attendanceStats.presentCount} hadir · {attendanceStats.lateCount} late · {attendanceStats.absentCount} absent
+                {attendanceStats.totalStatusEntries === 0
+                  ? 'Belum ada catatan absensi'
+                  : `${attendanceStats.presentCount} hadir · ${attendanceStats.lateCount} terlambat · ${attendanceStats.absentCount} absen`}
               </p>
             </button>
 
@@ -402,11 +406,13 @@ export const AnalyticsPage: React.FC = () => {
                 <span className="text-[11.5px] font-semibold text-[#9D113C] tabular-nums">
                   {examStats.totalAssessments > 0
                     ? `Lulus ${examStats.passRatePct}%`
-                    : '0 data'}
+                    : 'Belum ada nilai'}
                 </span>
               </div>
               <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
-                {examStats.totalAssessments} penilaian · KKM {examStats.passingScore}/{examStats.scaleMax}
+                {examStats.totalAssessments > 0
+                  ? `${examStats.totalAssessments} penilaian · KKM ${examStats.passingScore}/${examStats.scaleMax}`
+                  : `KKM aktif ${examStats.passingScore}/${examStats.scaleMax}`}
               </p>
             </button>
 
@@ -416,19 +422,23 @@ export const AnalyticsPage: React.FC = () => {
               className="p-4 sm:p-5 bg-[#F0EFFC]/75 hover:bg-[#F0EFFC] text-left transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between gap-2 text-[12px] font-semibold text-[#3F3B99]">
-                <span>Keseluruhan Assignment</span>
+                <span>Pengumpulan Tugas</span>
                 <Bookmark className="w-3.5 h-3.5 shrink-0" />
               </div>
               <div className="flex items-baseline justify-between gap-2 mt-2">
                 <span className="kpi-value text-[26px] font-bold text-[#1C1D21] tabular-nums">
-                  {assignmentStats.submissionRatePct}%
+                  {assignmentStats.totalExpectedSubmissions > 0
+                    ? `${assignmentStats.submissionRatePct}%`
+                    : '—'}
                 </span>
                 <span className="text-[11.5px] font-semibold text-[#3F3B99] tabular-nums">
-                  Avg {assignmentStats.gradedCount > 0 ? assignmentStats.meanScore : '—'}
+                  Rata-rata {assignmentStats.gradedCount > 0 ? assignmentStats.meanScore : '—'}
                 </span>
               </div>
               <p className="text-[11.5px] text-[#5854A8] mt-1 tabular-nums">
-                {assignmentStats.totalSubmitted}/{assignmentStats.totalExpectedSubmissions} masuk · {assignmentStats.needsReviewCount} review
+                {assignmentStats.totalAssignments === 0
+                  ? 'Belum ada tugas aktif'
+                  : `${assignmentStats.totalSubmitted}/${assignmentStats.totalExpectedSubmissions} masuk · ${assignmentStats.needsReviewCount} perlu dinilai`}
               </p>
             </button>
 
@@ -438,7 +448,7 @@ export const AnalyticsPage: React.FC = () => {
               className="p-4 sm:p-5 bg-[#FFF5E6]/75 hover:bg-[#FFF5E6] text-left transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between gap-2 text-[12px] font-semibold text-[#8C5811]">
-                <span>Keseluruhan LiveQuiz</span>
+                <span>Akurasi LiveQuiz</span>
                 <Zap className="w-3.5 h-3.5 shrink-0" />
               </div>
               <div className="flex items-baseline justify-between gap-2 mt-2">
@@ -452,7 +462,9 @@ export const AnalyticsPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-[11.5px] text-[#8C5811] mt-1 tabular-nums">
-                {liveQuizStats.uniqueParticipants} peserta unik · {liveQuizStats.totalQuizzesInLibrary} kuis
+                {liveQuizStats.totalSessions > 0
+                  ? `${liveQuizStats.uniqueParticipants} peserta unik · ${liveQuizStats.totalQuizzesInLibrary} kuis`
+                  : `${liveQuizStats.totalQuizzesInLibrary} kuis siap dijalankan`}
               </p>
             </button>
           </div>
@@ -503,7 +515,7 @@ export const AnalyticsPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="rounded-xl bg-[#FAFBFD] border border-black/[0.08] px-3 py-2">
-                        <div className="text-[11px] text-[#6E717A]">Avg Tugas</div>
+                        <div className="text-[11px] text-[#6E717A]">Rata-rata Tugas</div>
                         <div className="font-bold text-[#1C1D21]">
                           {row.assignmentScore !== null ? row.assignmentScore : '—'}
                         </div>
@@ -526,8 +538,8 @@ export const AnalyticsPage: React.FC = () => {
                       <th className="py-3 px-4">Kelas</th>
                       <th className="py-3 px-4 text-right">Crew</th>
                       <th className="py-3 px-4 text-right">Kehadiran</th>
-                      <th className="py-3 px-4 text-right">Submit Tugas</th>
-                      <th className="py-3 px-4 text-right">Avg Tugas</th>
+                      <th className="py-3 px-4 text-right">Pengumpulan Tugas</th>
+                      <th className="py-3 px-4 text-right">Rata-rata Tugas</th>
                       <th className="py-3 px-4 text-right">Akurasi LiveQuiz</th>
                     </tr>
                   </thead>

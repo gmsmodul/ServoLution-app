@@ -98,9 +98,13 @@ export const TrainersPage: React.FC = () => {
     return map;
   }, [trainersDirectory, trainerFeedbacks]);
 
-  const avgRating = Math.round(
-    classScopedTrainers.reduce((acc, t) => acc + t.rating, 0) / (classScopedTrainers.length || 1)
-  );
+  const avgRating =
+    classScopedTrainers.length > 0
+      ? Math.round(
+          classScopedTrainers.reduce((acc, t) => acc + t.rating, 0) /
+            classScopedTrainers.length
+        )
+      : null;
 
   const statusTabs = [
     {
@@ -156,7 +160,7 @@ export const TrainersPage: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <h1 className="text-[24px] font-semibold tracking-tight text-[#1C1D21]">Trainer</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-[#E6F9F0] text-[#146C43] text-[11.5px] font-bold tabular-nums">
-              Avg {avgRating}%
+              {avgRating !== null ? `Rata-rata Rating ${avgRating}%` : 'Belum ada data'}
             </span>
           </div>
         </div>
@@ -251,7 +255,7 @@ export const TrainersPage: React.FC = () => {
           {/* Filter Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <span className="md:hidden px-2.5 py-1 rounded-full bg-[#E6F9F0] text-[#146C43] text-[11.5px] font-bold mr-auto tabular-nums">
-              Avg {avgRating}%
+              {avgRating !== null ? `Rata-rata Rating ${avgRating}%` : 'Belum ada data'}
             </span>
             <div className="flex flex-wrap items-center justify-end md:justify-between gap-2.5 w-auto md:w-full">
               <SplitFilterButton

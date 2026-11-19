@@ -167,8 +167,26 @@ export const SchedulePage: React.FC = () => {
     return `/?${params.toString()}`;
   };
 
-  const onTimeCount = qrCheckIns.filter((c) => c.status === 'On Time').length;
-  const lateCount = qrCheckIns.filter((c) => c.status === 'Late').length;
+  const scopedQrCheckIns = useMemo(() => {
+    if (scheduleClassFilter === 'All') return qrCheckIns;
+    return qrCheckIns.filter(
+      (c) => normalizeClassKey(c.classCode) === scheduleClassFilter
+    );
+  }, [qrCheckIns, scheduleClassFilter]);
+
+  const onTimeCount = scopedQrCheckIns.filter((c) => c.status === 'On Time').length;
+  const lateCount = scopedQrCheckIns.filter((c) => c.status === 'Late').length;
+  const onTimeRatePct =
+    scopedQrCheckIns.length > 0
+      ? Math.round((onTimeCount / scopedQrCheckIns.length) * 100)
+      : 0;
+  const totalTargetStudents = filteredSchedules.reduce(
+    (sum, s) => sum + (s.students || 0),
+    0
+  );
+  const uniqueRoomsCount = new Set(
+    filteredSchedules.map((s) => s.room.trim()).filter(Boolean)
+  ).size;
 
   return (
     <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
@@ -279,31 +297,37 @@ export const SchedulePage: React.FC = () => {
 
           {/* Compact Session & QR Check-in Summary */}
           <div className="rounded-2xl border border-black/[0.12] divide-y divide-black/[0.08] overflow-hidden bg-white">
-            <div className="p-4 bg-[#FAFBFD] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-white border border-black/[0.06] flex items-center justify-center text-[#ee2e65]">
+            <div className="p-4 bg-[#FAFBFD] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-white border border-black/[0.06] flex items-center justify-center text-[#ee2e65] shrink-0">
                   <CalendarDays className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-[13.5px] font-bold text-[#1C1D21] tabular-nums">
                     {filteredSchedules.length} Sesi Terjadwal
                   </div>
-                  <div className="text-[11.5px] text-[#6E717A]">{selectedDateLabel}</div>
+                  <div className="text-[11.5px] text-[#6E717A] tabular-nums truncate">
+                    {filteredSchedules.length > 0
+                      ? `${totalTargetStudents} target peserta · ${uniqueRoomsCount} ruang`
+                      : `Tidak ada sesi · ${selectedDateLabel}`}
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="p-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#E6F9F0] flex items-center justify-center text-[#146C43]">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-[#E6F9F0] flex items-center justify-center text-[#146C43] shrink-0">
                   <QrCode className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-[13.5px] font-bold text-[#1C1D21] tabular-nums">
-                    {qrCheckIns.length} Scan Crew QR
+                    {scopedQrCheckIns.length} Scan QR Masuk
                   </div>
-                  <div className="text-[11.5px] text-[#6E717A] tabular-nums">
-                    {onTimeCount} On Time · {lateCount} Late
+                  <div className="text-[11.5px] text-[#6E717A] tabular-nums truncate">
+                    {scopedQrCheckIns.length === 0
+                      ? 'Belum ada scan QR pada filter ini'
+                      : `${onTimeCount} tepat waktu (${onTimeRatePct}%) · ${lateCount} terlambat`}
                   </div>
                 </div>
               </div>
@@ -311,7 +335,7 @@ export const SchedulePage: React.FC = () => {
                 onClick={() => setActivePage('attendance')}
                 className={ACTION_BTN_SOFT_PRIMARY}
               >
-                Attendance
+                Absensi
               </button>
             </div>
           </div>
@@ -372,7 +396,7 @@ export const SchedulePage: React.FC = () => {
                             <MapPin className="w-3.5 h-3.5 text-[#8A8D98]" /> {item.room}
                           </span>
                           <span className="flex items-center gap-1 tabular-nums">
-                            <Users className="w-3.5 h-3.5 text-[#8A8D98]" /> {item.students} students
+                            <Users className="w-3.5 h-3.5 text-[#8A8D98]" /> {item.students} peserta
                           </span>
                         </div>
                       </div>

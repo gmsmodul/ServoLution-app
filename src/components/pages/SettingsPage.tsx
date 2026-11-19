@@ -63,13 +63,17 @@ export const SettingsPage: React.FC = () => {
     examGradingRule,
     lastBatchSavedAt,
     studentsDirectory,
+    trainersDirectory,
+    trainerFeedbacks,
     attendanceByClass,
     schedules,
     exams,
+    examAssessments,
     assignments,
     lessonPlans,
     materialsList,
     liveQuizzes,
+    liveQuizReports,
     reportsList,
     qrCheckIns,
     switchActiveBatch,
@@ -132,25 +136,35 @@ export const SettingsPage: React.FC = () => {
   const totalUnifiedRecords = useMemo(() => {
     return (
       studentsDirectory.length +
+      trainersDirectory.length +
+      trainerFeedbacks.length +
       schedules.length +
       exams.length +
+      examAssessments.length +
       assignments.length +
       lessonPlans.length +
       materialsList.length +
       liveQuizzes.length +
+      liveQuizReports.length +
       reportsList.length +
-      totalAttendanceRecords
+      totalAttendanceRecords +
+      qrCheckIns.length
     );
   }, [
     studentsDirectory.length,
+    trainersDirectory.length,
+    trainerFeedbacks.length,
     schedules.length,
     exams.length,
+    examAssessments.length,
     assignments.length,
     lessonPlans.length,
     materialsList.length,
     liveQuizzes.length,
+    liveQuizReports.length,
     reportsList.length,
     totalAttendanceRecords,
+    qrCheckIns.length,
   ]);
 
   // Live graduation evaluations using current draft rules
@@ -164,6 +178,11 @@ export const SettingsPage: React.FC = () => {
     () => graduationEvaluations.filter((ev) => ev.overallPassed).length,
     [graduationEvaluations]
   );
+
+  const eligiblePct =
+    studentsDirectory.length > 0
+      ? Math.round((eligibleCount / studentsDirectory.length) * 100)
+      : 0;
 
   // Live exam weights & distribution
   const totalExamWeight =
@@ -381,7 +400,7 @@ export const SettingsPage: React.FC = () => {
             {totalUnifiedRecords} Entitas
           </div>
           <p className="text-[11.5px] text-[#35684E] mt-1 tabular-nums">
-            {studentsDirectory.length} siswa · {schedules.length} sesi · {exams.length} ujian
+            {studentsDirectory.length} peserta · {schedules.length} sesi · {exams.length + examAssessments.length} ujian
           </p>
         </div>
 
@@ -391,17 +410,19 @@ export const SettingsPage: React.FC = () => {
             {gradDraft.minAttendanceRatePct}%
           </div>
           <p className="text-[11.5px] text-[#7A592A] mt-1 tabular-nums">
-            Maks {gradDraft.maxUnexcusedAbsences} absent · {gradDraft.maxLateCount} late
+            Maks {gradDraft.maxUnexcusedAbsences} absen · {gradDraft.maxLateCount} terlambat
           </p>
         </div>
 
         <div className="p-4 sm:p-5 bg-[#FEF1F5] border-l border-black/[0.08] sm:border-l-0">
-          <span className="text-[12px] font-semibold text-[#9D113C]">KKM Penilaian Exams</span>
+          <span className="text-[12px] font-semibold text-[#9D113C]">KKM Penilaian Ujian</span>
           <div className="kpi-value text-[22px] sm:text-[24px] font-bold text-[#1C1D21] mt-1.5 tabular-nums">
             {examDraft.passingScore} / {examDraft.scaleMax}
           </div>
           <p className="text-[11.5px] text-[#7D3A51] mt-1 tabular-nums">
-            {eligibleCount}/{studentsDirectory.length} siswa memenuhi syarat
+            {studentsDirectory.length === 0
+              ? 'Belum ada peserta di batch ini'
+              : `${eligibleCount}/${studentsDirectory.length} memenuhi syarat (${eligiblePct}%)`}
           </p>
         </div>
       </div>
@@ -825,11 +846,11 @@ export const SettingsPage: React.FC = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-y sm:divide-y-0 border border-black/[0.08] rounded-xl overflow-hidden divide-x divide-black/[0.08]">
               {[
-                { label: 'Siswa', value: `${studentsDirectory.length} data` },
-                { label: 'Jadwal Sesi', value: `${schedules.length} sesi` },
+                { label: 'Peserta & Trainer', value: `${studentsDirectory.length + trainersDirectory.length} orang` },
+                { label: 'Jadwal & Persiapan', value: `${schedules.length + lessonPlans.length} modul` },
                 { label: 'Absensi & QR', value: `${totalAttendanceRecords + qrCheckIns.length} log` },
-                { label: 'Exams & Tugas', value: `${exams.length + assignments.length} item` },
-                { label: 'Materi & Quiz', value: `${materialsList.length + liveQuizzes.length} modul` },
+                { label: 'Ujian & Tugas', value: `${exams.length + examAssessments.length + assignments.length} item` },
+                { label: 'Materi & Kuis', value: `${materialsList.length + liveQuizzes.length + liveQuizReports.length} entri` },
               ].map((cell) => (
                 <div key={cell.label} className="p-3.5 bg-[#FAFBFD]">
                   <div className="text-[11.5px] font-medium text-[#6E717A]">{cell.label}</div>

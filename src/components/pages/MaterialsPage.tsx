@@ -852,7 +852,7 @@ export const MaterialsPage: React.FC = () => {
                 Tuntas Semua: {crewBlockKpis.completedAll}/{crewBlockKpis.total}
               </span>
               <span className="px-3 py-1 rounded-full bg-[#FEF1F5] text-[#9D113C] font-semibold">
-                Rata-rata: {crewBlockKpis.avgCompletion}%
+                Rata-rata Progres: {crewBlockKpis.total > 0 ? `${crewBlockKpis.avgCompletion}%` : '—'}
               </span>
             </div>
 
